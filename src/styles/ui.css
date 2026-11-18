@@ -1,0 +1,650 @@
+/*
+  Ortak düğme dili: sitedeki bütün düğmeler aynı kilden yapılmış gibi görünür.
+  - İkincil (kart renginde) düğmeler: altta kalın bir kil kenarı, üzerine gelince kalkar, basınca çöker.
+  - Birincil (vurgu renginde) düğmeler: "Keşfet" düğmesiyle aynı pembe kil.
+  Okuma sayfası da sitenin kartları gibi: bantla tutturulmuş kil bir kâğıt.
+*/
+:root {
+  --btn-edge: color-mix(in srgb, var(--tone, var(--accent)) 26%, #c9b9cd);
+  --btn-drop: rgba(74, 42, 70, 0.22);
+}
+[data-theme='night'] {
+  --btn-edge: color-mix(in srgb, var(--tone, var(--accent)) 30%, #0d0a18);
+  --btn-drop: rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- ikincil kil düğme ---------- */
+:root:root .insp-nav button,
+:root:root .hud-zoom button,
+:root:root .hud-chips button,
+:root:root .scope-acts button,
+:root:root .rd-next button,
+:root:root .replay button,
+:root:root .cta.ghost,
+:root:root .drawer .close,
+:root:root .rd-copy {
+  border: 1.5px solid var(--edge);
+  background: var(--card);
+  box-shadow:
+    0 4px 0 -1px var(--btn-edge),
+    0 12px 16px -10px var(--btn-drop),
+    inset 0 2px 0 var(--hi);
+  transition:
+    translate 0.3s var(--spring),
+    box-shadow 0.2s,
+    color 0.2s;
+}
+:root:root .insp-nav button:hover,
+:root:root .hud-zoom button:hover,
+:root:root .hud-chips button:hover,
+:root:root .scope-acts button:hover,
+:root:root .rd-next button:hover,
+:root:root .replay button:hover,
+:root:root .cta.ghost:hover,
+:root:root .drawer .close:hover {
+  translate: 0 -2px;
+}
+:root:root .insp-nav button:active,
+:root:root .hud-zoom button:active,
+:root:root .hud-chips button:active,
+:root:root .scope-acts button:active,
+:root:root .rd-next button:active,
+:root:root .replay button:active,
+:root:root .cta.ghost:active,
+:root:root .drawer .close:active {
+  translate: 0 3px;
+  box-shadow:
+    0 1px 0 -1px var(--btn-edge),
+    0 4px 8px -6px var(--btn-drop),
+    inset 0 2px 0 var(--hi);
+}
+:root:root .replay button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font: 500 11.5px var(--mono);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* ---------- birincil kil düğme ---------- */
+:root:root .rd-back,
+:root:root .scope-acts .scope-go,
+:root:root .insp-nav .poke,
+:root:root #hud-x,
+:root:root .drawer .go {
+  color: var(--accent-fg);
+  border: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 86%, #fff), var(--accent));
+  box-shadow:
+    0 5px 0 -1px color-mix(in srgb, var(--accent) 62%, #20081a),
+    0 16px 20px -12px var(--accent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  transition:
+    translate 0.3s var(--spring),
+    box-shadow 0.2s;
+}
+:root:root .rd-back:hover,
+:root:root .scope-acts .scope-go:hover,
+:root:root .insp-nav .poke:hover,
+:root:root #hud-x:hover,
+:root:root .drawer .go:hover {
+  translate: 0 -2px;
+  color: var(--accent-fg);
+}
+:root:root .rd-back:active,
+:root:root .scope-acts .scope-go:active,
+:root:root .insp-nav .poke:active,
+:root:root #hud-x:active,
+:root:root .drawer .go:active {
+  translate: 0 4px;
+  box-shadow:
+    0 1px 0 -1px color-mix(in srgb, var(--accent) 62%, #20081a),
+    0 6px 10px -8px var(--accent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+:root:root .rd-back {
+  padding: 10px 18px 10px 13px;
+  border-radius: 16px;
+}
+:root:root .rd-back:hover svg {
+  translate: -4px 0;
+}
+.rd-back svg {
+  transition: translate 0.3s var(--spring);
+}
+
+/* yazı satırları (çekmecedeki yıldız listesi): küçük kil kartlar */
+:root:root button.post {
+  box-shadow:
+    0 3px 0 -1px var(--btn-edge),
+    inset 0 1px 0 var(--hi);
+}
+:root:root button.post:active {
+  translate: 0 2px;
+  box-shadow: inset 0 1px 0 var(--hi);
+}
+
+/* ---------- okuma sayfası: bantla tutturulmuş kil kâğıt ---------- */
+.rd-article {
+  position: relative;
+  padding: 46px 52px 40px;
+  border-radius: 36px;
+  background: var(--card);
+  border: 1.5px solid var(--edge);
+  box-shadow: var(--clay);
+}
+.rd-article::before,
+.rd-article::after {
+  content: '';
+  position: absolute;
+  top: -14px;
+  width: 108px;
+  height: 28px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 6px, transparent 6px 12px),
+    color-mix(in srgb, var(--tone) 78%, #fff);
+  opacity: 0.92;
+  box-shadow: 0 4px 8px -4px rgba(60, 30, 80, 0.4);
+  clip-path: polygon(0 0, 100% 0, 96% 25%, 100% 50%, 96% 75%, 100% 100%, 0 100%, 4% 75%, 0 50%, 4% 25%);
+}
+.rd-article::before {
+  left: 46px;
+  rotate: -4deg;
+}
+.rd-article::after {
+  right: 52px;
+  rotate: 3deg;
+  width: 74px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 6px, transparent 6px 12px),
+    color-mix(in srgb, var(--accent) 60%, #fff);
+}
+/* kâğıdın içindeki küçük parçalar da aynı dilden */
+:root:root .rd-meta span {
+  box-shadow:
+    0 2px 0 -1px var(--btn-edge),
+    inset 0 1px 0 var(--hi);
+}
+:root:root .rd-meta .rd-lang {
+  cursor: pointer;
+  color: var(--fg);
+  transition: translate 0.25s var(--spring);
+}
+:root:root .rd-meta .rd-lang:hover {
+  translate: 0 -2px;
+}
+.rd-toc {
+  padding: 16px 16px 12px;
+  border-radius: 22px;
+  background: var(--card);
+  border: 1.5px solid var(--edge);
+  box-shadow: var(--clay-sm);
+}
+:root:root .rd-next button {
+  border-radius: 22px;
+}
+.rd-bar {
+  border-bottom: 1.5px solid var(--edge);
+}
+@media (max-width: 620px) {
+  .rd-article {
+    padding: 34px 20px 28px;
+    border-radius: 28px;
+  }
+  .rd-article::before {
+    left: 26px;
+    width: 84px;
+  }
+  .rd-article::after {
+    right: 28px;
+    width: 56px;
+  }
+  .rd-wrap {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+
+/* dar telefon: karşılama düğmeleri taşmasın; sayfa çubuğu kartın üstüne binmesin */
+@media (max-width: 420px) {
+  :root:root .hero .cta {
+    padding: 13px 16px 13px 18px;
+    font-size: 16px;
+    gap: 8px;
+  }
+}
+@media (max-width: 899px) {
+  .pagebar {
+    right: 0;
+    width: 20px;
+  }
+  :root:root .panel.left,
+  :root:root .panel.right {
+    right: max(24px, env(safe-area-inset-right, 0px));
+  }
+}
+/* iletişim satırları dar kartta taşmasın */
+:root:root .links a {
+  min-width: 0;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+:root:root .links a span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* çekmece kaydırılınca içerik üst kenarda yumuşakça kaybolur */
+.drawer.scrolled #drawer-body {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 34px);
+  mask-image: linear-gradient(180deg, transparent 0, #000 34px);
+}
+#drawer-body {
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+}
+
+/* ---------- müzik gezegeni: pikap + plak rafı + Spotify oynatıcısı ---------- */
+.vinyl,
+.deck-disc {
+  --c: #f7c548;
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  /* plak: koyu disk ve ince oluklar; ortadaki etiket çalma listesinin kapağı */
+  background: repeating-radial-gradient(circle, #2a2238 0 2px, #1b1626 2px 4px);
+  box-shadow:
+    0 3px 0 -1px rgba(20, 10, 30, 0.5),
+    0 8px 12px -8px rgba(40, 20, 60, 0.6),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.12);
+}
+.vinyl u,
+.deck-disc u {
+  position: relative;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  font: 700 10px/1 var(--mono);
+  color: #3e1f38;
+  background: var(--c) center / cover no-repeat;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.35);
+}
+.deck-disc u {
+  font-size: 15px;
+}
+.vinyl.has-cover u,
+.deck-disc.has-cover u {
+  background-image: var(--cover);
+  color: transparent;
+  width: 62%;
+}
+/* ortadaki delik */
+.has-cover u::after {
+  content: '';
+  position: absolute;
+  width: 14%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #1b1626;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+}
+/* plağın üstündeki ışık */
+.vinyl i,
+.deck-disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 20deg,
+    transparent 0 12%,
+    rgba(255, 255, 255, 0.16) 18%,
+    transparent 26% 62%,
+    rgba(255, 255, 255, 0.12) 68%,
+    transparent 76%
+  );
+  pointer-events: none;
+}
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 8px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 2px 6px rgba(60, 30, 80, 0.12);
+}
+.vinyl {
+  cursor: pointer;
+  transition:
+    translate 0.3s var(--spring),
+    scale 0.3s var(--spring),
+    rotate 0.5s var(--spring),
+    opacity 0.25s;
+}
+@media (hover: hover) {
+  .vinyl:not(.out):hover {
+    translate: 0 -5px;
+    scale: 1.16;
+    rotate: 18deg;
+    z-index: 1;
+  }
+}
+.vinyl:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+/* pikaptaki plağın raftaki yeri boş kalır */
+.vinyl.out {
+  cursor: default;
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong, var(--line));
+}
+.vinyl.out > * {
+  visibility: hidden;
+}
+/* raftan pikaba (ve geri) uçan kopya */
+.vinyl.fly {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  pointer-events: none;
+  transition: none;
+  will-change: transform;
+}
+
+/* pikap */
+.deck {
+  position: relative;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: end;
+  gap: 12px;
+  margin: 4px 0 12px;
+  padding: 12px 14px;
+  border-radius: 22px;
+  background: var(--inset);
+  border: 1px solid var(--edge);
+  box-shadow: var(--clay-sm);
+}
+.deck-platter {
+  position: relative;
+  width: 112px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--fg) 8%, transparent) 0 58%,
+    color-mix(in srgb, var(--fg) 20%, transparent) 59% 100%
+  );
+  box-shadow:
+    inset 0 3px 8px rgba(40, 20, 60, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.deck-disc {
+  width: 92%;
+  visibility: hidden;
+}
+.deck.has .deck-disc {
+  visibility: visible;
+}
+.deck-pin {
+  position: absolute;
+  width: 9px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f4efe6;
+  box-shadow:
+    0 0 0 1.5px rgba(0, 0, 0, 0.35),
+    0 2px 3px rgba(0, 0, 0, 0.4);
+}
+/* kol: sağ üstteki mile bağlı; önce plağın üstüne döner, sonra iğne iner */
+.deck-arm {
+  position: absolute;
+  left: 136px;
+  top: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent, #f28ac0);
+  box-shadow:
+    var(--clay-sm),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.14);
+  rotate: -6deg;
+  scale: 1.06;
+  filter: drop-shadow(0 7px 5px rgba(20, 8, 30, 0.28));
+  transition:
+    rotate 0.7s cubic-bezier(0.5, 0, 0.2, 1),
+    scale 0.28s ease-in,
+    filter 0.28s ease-in;
+}
+.deck-arm i {
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  width: 6px;
+  height: 76px;
+  border-radius: 4px;
+  background: var(--muted);
+}
+.deck-arm i::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  bottom: -6px;
+  width: 14px;
+  height: 20px;
+  border-radius: 5px;
+  background: var(--accent, #f28ac0);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.16);
+  rotate: 18deg;
+}
+.deck.on .deck-arm {
+  rotate: 30deg;
+}
+.deck.down .deck-arm {
+  scale: 1;
+  filter: drop-shadow(0 1px 1px rgba(20, 8, 30, 0.3));
+}
+/* çalarken plaktan notalar yükselir */
+.deck-notes {
+  position: absolute;
+  left: 96px;
+  top: 30px;
+  pointer-events: none;
+}
+.deck-notes i {
+  position: absolute;
+  font: 400 15px/1 var(--display, sans-serif);
+  font-style: normal;
+  color: var(--accent, #f28ac0);
+  opacity: 0;
+}
+.deck.down .deck-notes i {
+  animation: deck-note 2.8s ease-out infinite;
+}
+.deck.down .deck-notes i:nth-child(2) {
+  animation-delay: 0.9s;
+  left: 14px;
+}
+.deck.down .deck-notes i:nth-child(3) {
+  animation-delay: 1.8s;
+  left: -8px;
+}
+@keyframes deck-note {
+  0% {
+    opacity: 0;
+    translate: 0 8px;
+    rotate: -10deg;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: 16px -34px;
+    rotate: 16deg;
+  }
+}
+.deck-now {
+  grid-column: 2;
+  margin: 0;
+  min-width: 0;
+  padding-left: 34px;
+  font: 600 21px/1.05 var(--hand, Caveat, cursive);
+  color: var(--muted);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.deck.has .deck-now {
+  color: var(--fg);
+}
+.player:empty {
+  display: none;
+}
+.player iframe {
+  display: block;
+  width: 100%;
+  height: clamp(152px, calc(78vh - 500px), 352px);
+  border: 0;
+  border-radius: 14px;
+  background: var(--inset);
+  color-scheme: normal;
+  animation: player-in 0.5s var(--spring) both;
+}
+@keyframes player-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+.pl-note {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1.5px dashed var(--line-strong, var(--line));
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  animation: player-in 0.5s var(--spring) both;
+}
+.pl-open {
+  display: block;
+  width: fit-content;
+  margin: 8px 2px 2px auto;
+  font: 500 11.5px var(--mono);
+  color: var(--muted);
+}
+.pl-open:hover {
+  color: var(--accent);
+}
+/* müzik çekmecesi biraz daha yüksek: pikap, raf ve oynatıcı kaydırmadan sığsın */
+@media (min-width: 900px) {
+  :root .drawer.music {
+    max-height: min(88vh, calc(100svh - 96px));
+  }
+}
+/* telefonda müzik çekmecesi biraz daha yüksek: pikap ve raf birlikte görünsün */
+@media (max-width: 899px) and (min-height: 521px) {
+  :root .drawer.music {
+    max-height: 66vh;
+  }
+  .player iframe {
+    height: 152px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck.down .deck-notes i,
+  .player iframe,
+  .pl-note {
+    animation: none;
+  }
+}
+
+/* ---------- resim gezegeni: Van Gogh'a küçük bir selam (Yıldızlı Gece girdapları) ---------- */
+.vangogh {
+  position: relative;
+  height: 150px;
+  margin: 8px 0 10px;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 120%, #20305f 0 40%, transparent 41%),
+    linear-gradient(180deg, #1d3a7a, #3566b0 60%, #4f86c6);
+  box-shadow:
+    inset 0 0 0 4px #e9c77a,
+    inset 0 0 0 6px #b98f3e,
+    0 10px 18px -10px rgba(30, 40, 90, 0.6);
+}
+.vangogh i {
+  position: absolute;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #f7d76a 0 8deg, #8fc0ee 8deg 20deg, #2c56a3 20deg 30deg);
+  -webkit-mask: repeating-radial-gradient(circle, #000 0 3px, transparent 3px 6px);
+  mask: repeating-radial-gradient(circle, #000 0 3px, transparent 3px 6px);
+  animation: vg-swirl 9s linear infinite;
+}
+.vangogh i:nth-child(1) {
+  left: 30%;
+  top: 14%;
+  width: 96px;
+  height: 96px;
+}
+.vangogh i:nth-child(2) {
+  left: 8%;
+  top: 38%;
+  width: 54px;
+  height: 54px;
+  animation-direction: reverse;
+  animation-duration: 6s;
+}
+.vangogh i:nth-child(3) {
+  right: 26%;
+  top: 46%;
+  width: 40px;
+  height: 40px;
+  animation-duration: 5s;
+}
+/* hilal */
+.vangogh b {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3b0 0 30%, #f7c548 60%, rgba(247, 197, 72, 0) 72%);
+  box-shadow: 0 0 22px 6px rgba(247, 215, 106, 0.55);
+}
+@keyframes vg-swirl {
+  to {
+    rotate: 360deg;
+  }
+}
+.vg-cap {
+  margin: 0;
+  font: 600 19px/1.25 var(--hand, Caveat, cursive);
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .vangogh i {
+    animation: none;
+  }
+}

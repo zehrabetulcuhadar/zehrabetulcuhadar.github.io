@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:image" content={new URL('/og.png', Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <meta name="theme-color" content="#f6ece8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14112a" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Caveat:wght@600&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap"
+    />
+    <!-- Tema, sayfa çizilmeden seçilir ki ekran bir an yanlış renkte yanıp sönmesin -->
+    <script is:inline>
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem('theme');
+        } catch (e) {}
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
+        var root = document.documentElement;
+        root.setAttribute('data-theme', t);
+        // Sayfayı barındıran ortam data-theme'e başka bir değer (dark/light) yazarsa kendi değerimize döneriz
+        new MutationObserver(function () {
+          var v = root.getAttribute('data-theme');
+          if (v === 'day' || v === 'night') t = v;
+          else root.setAttribute('data-theme', t);
+        }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

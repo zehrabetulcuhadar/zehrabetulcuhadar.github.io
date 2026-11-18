@@ -1,0 +1,32 @@
+# Learning Galaxy
+
+## Çalıştırma
+
+```bash
+npm install
+npm run dev      # http://localhost:4321
+npm run build    # dist/ klasörüne derler
+```
+
+## Klasörler
+
+- `src/pages/index.astro`: sayfanın bölümleri (giriş, hakkımda, gelişim, gökyüzü, iletişim)
+- `src/pages/404.astro`: bulunamayan sayfa
+- `src/data/site.ts`: metinler, deneyimler, beceriler, gezegenler, örnek yazılar ve Spotify çalma listeleri
+- `src/components/`: açılış (`Intro.astro`) ve yazı görünümü (`Reader.astro`)
+- `src/scripts/galaxy/`: 3D sahne; gezegen karakterleri `characters/` altında
+- `src/scripts/intro.ts`: açılış animasyonları (varsayılan: kod editörü ve bomba)
+- `src/scripts/theme-switch.ts`: gece gündüz düğmesindeki sahne
+- `src/scripts/i18n.ts`: Türkçe ve İngilizce metinler
+- `src/styles/`: renkler, temalar ve ortak düğme dili
+- `design/gece-gunduz-dugmesi.html`: gece gündüz düğmesi için üç tasarım denemesi (yayına girmez)
+
+## Kısayollar
+
+- Açılışı yeniden izlemek için adresin sonuna `#kod`, `#terminal` ya da `#bomba` ekle.
+- Her gezegende çok sayıda yazı olunca nasıl göründüğünü denemek için `#dolu` ekle.
+
+## Yayın
+
+`main` dalına her push'ta `.github/workflows/deploy.yml` siteyi derleyip yayınlar.
+Repo ayarlarında **Settings → Pages → Source: GitHub Actions** seçili olmalı.

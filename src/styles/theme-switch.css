@@ -1,0 +1,67 @@
+/* gece gündüz düğmesi: kil çerçeveli küçük bir pencere; sahne src/scripts/theme-switch.ts içinde çizilir */
+:root:root .theme {
+  width: 96px;
+  height: auto;
+  padding: 4px;
+}
+.ts-scene,
+.ts-scene svg {
+  display: block;
+  width: 100%;
+}
+.ts-scene svg {
+  height: auto;
+  aspect-ratio: 200 / 88;
+  border-radius: 999px;
+  overflow: hidden;
+}
+/* yürüyen bacaklar ve küçük döngüler */
+.ts-scene .leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+.ts-scene .walk .l1 {
+  animation: ts-step 0.26s linear infinite alternate;
+}
+.ts-scene .walk .l2 {
+  animation: ts-step 0.26s linear infinite alternate-reverse;
+}
+.ts-scene .walk .bob {
+  animation: ts-bob 0.26s ease-in-out infinite alternate;
+}
+@keyframes ts-step {
+  from {
+    transform: rotate(-28deg);
+  }
+  to {
+    transform: rotate(28deg);
+  }
+}
+@keyframes ts-bob {
+  to {
+    transform: translateY(-1.6px);
+  }
+}
+.ts-scene .zzz text,
+.ts-scene .tw {
+  animation: ts-twinkle 2.6s ease-in-out infinite;
+}
+.ts-scene .zzz text:nth-child(2),
+.ts-scene .tw:nth-child(2n) {
+  animation-delay: 0.7s;
+}
+@keyframes ts-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ts-scene .zzz text,
+  .ts-scene .tw {
+    animation: none;
+  }
+}

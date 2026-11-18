@@ -1,0 +1,672 @@
+---
+/*
+  Açılış: "Zero'ya geri sayım".
+  Siyah ekranda küçük bir retro terminal kendi kendine yazar, 3-2-1-0 sayar, 0 "Zero" olur.
+  Tıklayınca pencere imlece, imleç tek bir ışık noktasına çöker; nokta galaksinin merkezine
+  uçar, içine çeker ve patlar (Big Bang). Mantık: src/scripts/intro.ts
+*/
+---
+
+<!-- Karar sayfa çizilmeden verilir; böylece site bir an görünüp kaybolmaz. -->
+<script is:inline>
+  (function () {
+    var d = document.documentElement;
+    var seen = false;
+    try {
+      seen = !!sessionStorage.getItem('zero-intro');
+    } catch (e) {}
+    var h = location.hash;
+    // #bomba / #terminal: o açılışı (oturumda daha önce oynamış olsa da) yeniden oynatır
+    var pick = h === '#bomba' ? 'bomb' : h === '#terminal' ? 'term' : h === '#kod' ? 'ide' : '';
+    try {
+      var want = sessionStorage.getItem('zero-intro-play');
+      if (want) {
+        pick = want;
+        sessionStorage.removeItem('zero-intro-play');
+      }
+    } catch (e) {}
+    if (pick && history.replaceState && (h === '#bomba' || h === '#terminal' || h === '#kod'))
+      history.replaceState(null, '', location.pathname + location.search);
+    if (
+      (pick || (!seen && (!h || h === '#giris'))) &&
+      !matchMedia('(prefers-reduced-motion: reduce)').matches &&
+      (pick || scrollY < innerHeight * 0.5)
+    ) {
+      d.classList.add('boot', 'intro');
+      if (pick === 'bomb') d.classList.add('bomb');
+      if (pick === 'term') d.classList.add('term');
+      // emniyet: betik hiç yüklenmezse açılış ekranı sonsuza dek kalmasın
+      setTimeout(function () {
+        if (!window.__zeroIntro) d.classList.remove('boot', 'intro');
+      }, 9000);
+    }
+  })();
+</script>
+
+<div class="zi" id="intro">
+  <p class="visually-hidden">Açılış animasyonu oynuyor. Atlamak için Escape tuşuna basabilirsiniz.</p>
+  <canvas class="zi-fx" aria-hidden="true"></canvas>
+  <div class="zi-stage" aria-hidden="true">
+    <div class="zi-win">
+      <div class="zi-titlebar">
+        <span class="zi-dots"><i></i><i></i><i></i></span>
+        <span class="zi-title">zero@galaxy — bash</span>
+      </div>
+      <div class="zi-body">
+        <div class="zi-log"></div>
+        <div class="zi-count"></div>
+        <div class="zi-ready"></div>
+      </div>
+    </div>
+    <p class="zi-hint"></p>
+  </div>
+  <div class="zi-spark" aria-hidden="true"></div>
+  <div class="zi-flash" aria-hidden="true"></div>
+  <button class="zi-skip" type="button" aria-label="Açılış animasyonunu atla">
+    Atla <kbd aria-hidden="true">esc</kbd>
+  </button>
+</div>
+
+<style is:global>
+  .zi {
+    display: none;
+  }
+  :root.boot .zi {
+    display: block;
+  }
+  .zi {
+    --zi-pink: #f28ac0;
+    --zi-gold: #f5c45e;
+    --zi-mint: #7ee0b5;
+    --zi-ink: #e9e4f2;
+    --zi-dim: #7d7490;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    color: var(--zi-ink);
+    background:
+      radial-gradient(60% 50% at 50% 46%, rgba(64, 38, 92, 0.32), transparent 70%),
+      radial-gradient(120% 90% at 50% 50%, #07060d 40%, #020103 100%);
+    background-color: #040308;
+    touch-action: none;
+    overscroll-behavior: contain;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    cursor: default;
+  }
+  .zi.ready {
+    cursor: pointer;
+  }
+  /* ince film grenini andıran doku */
+  .zi::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.07;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .zi.gone::before {
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .zi-fx {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .zi-stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 22px;
+    padding: 0 16px;
+  }
+
+  /* ---------- pencere ---------- */
+  .zi-win {
+    position: relative;
+    width: min(560px, 100%);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #15121f 0%, #0d0b15 100%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 30px 80px -20px rgba(0, 0, 0, 0.9),
+      0 0 60px -12px rgba(242, 138, 192, 0.28),
+      0 0 120px -30px rgba(245, 196, 94, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+    opacity: 0;
+    will-change: transform;
+  }
+  /* tarama çizgileri + hafif ekran yansıması */
+  .zi-win::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px),
+      radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 60%);
+    mix-blend-mode: screen;
+    animation: zi-flicker 5s steps(1) infinite;
+  }
+  @keyframes zi-flicker {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    47% {
+      opacity: 0.75;
+    }
+    48% {
+      opacity: 1;
+    }
+    83% {
+      opacity: 0.85;
+    }
+    84% {
+      opacity: 1;
+    }
+  }
+  .zi-titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .zi-dots {
+    display: flex;
+    gap: 7px;
+  }
+  .zi-dots i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.25);
+  }
+  .zi-dots i:nth-child(2) {
+    background: #febc2e;
+  }
+  .zi-dots i:nth-child(3) {
+    background: #28c840;
+  }
+  .zi-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 500 11.5px var(--mono);
+    letter-spacing: 0.02em;
+    color: var(--zi-dim);
+    white-space: nowrap;
+  }
+
+  .zi-body {
+    position: relative;
+    height: 312px;
+    padding: 16px 18px;
+    font: 400 13.5px/1.75 var(--mono);
+    color: var(--zi-ink);
+    text-shadow: 0 0 6px rgba(233, 228, 242, 0.25);
+  }
+  .zi-log {
+    transition:
+      opacity 0.45s ease,
+      filter 0.45s ease,
+      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .zi-log.dim {
+    opacity: 0.07;
+    filter: blur(1.5px);
+    transform: translateY(-10px);
+  }
+  .zi-line {
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  .zi-line.in {
+    animation: zi-in 0.18s ease-out;
+  }
+  @keyframes zi-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+  }
+  .zi-u {
+    color: var(--zi-pink);
+    text-shadow: 0 0 8px rgba(242, 138, 192, 0.45);
+  }
+  .zi-p {
+    color: var(--zi-dim);
+  }
+  .zi-a {
+    color: var(--zi-gold);
+  }
+  .zi-m {
+    color: var(--zi-dim);
+  }
+  .zi-ok {
+    display: inline-block;
+    color: var(--zi-mint);
+    text-shadow: 0 0 8px rgba(126, 224, 181, 0.55);
+  }
+  .zi-ok.pop {
+    animation: zi-pop 0.32s cubic-bezier(0.3, 1.8, 0.5, 1);
+  }
+  @keyframes zi-pop {
+    from {
+      transform: scale(0.2);
+      opacity: 0;
+    }
+  }
+  .zi-spin {
+    color: var(--zi-gold);
+  }
+  .zi-barfill {
+    color: var(--zi-pink);
+    text-shadow: 0 0 8px rgba(242, 138, 192, 0.6);
+  }
+  .zi-barrest {
+    color: rgba(255, 255, 255, 0.14);
+    text-shadow: none;
+  }
+
+  /* blok imleç */
+  .zi-cur {
+    display: inline-block;
+    width: 0.62em;
+    height: 1.15em;
+    margin-left: 1px;
+    vertical-align: -0.2em;
+    border-radius: 1px;
+    background: #fbe9f3;
+    box-shadow:
+      0 0 8px rgba(242, 138, 192, 0.9),
+      0 0 18px rgba(242, 138, 192, 0.45);
+    animation: zi-blink 1.06s steps(1) infinite;
+  }
+  .zi-cur.solid {
+    animation: none;
+  }
+  @keyframes zi-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* ---------- geri sayım ---------- */
+  .zi-count {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .zi-count > * {
+    grid-area: 1 / 1;
+  }
+  .zi-digit {
+    font: 500 156px/1 var(--mono);
+    color: #fff7fb;
+    text-shadow:
+      -2px 0 rgba(255, 70, 140, 0.55),
+      2px 0 rgba(90, 220, 255, 0.45),
+      0 0 24px rgba(242, 138, 192, 0.75),
+      0 0 70px rgba(242, 138, 192, 0.4);
+    will-change: transform, opacity, filter;
+  }
+  .zi-ring {
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(242, 138, 192, 0.7);
+    box-shadow:
+      0 0 24px rgba(242, 138, 192, 0.4),
+      inset 0 0 24px rgba(242, 138, 192, 0.25);
+    opacity: 0;
+  }
+  .zi-word {
+    width: 330px;
+    overflow: visible;
+    transform: translateY(-4px) rotate(-4deg);
+    filter: drop-shadow(0 0 7px rgba(245, 196, 94, 0.8)) drop-shadow(0 0 26px rgba(242, 138, 192, 0.55));
+  }
+  .zi-pen {
+    fill: none;
+    stroke: #fff4d6;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1 1;
+  }
+  .zi-sparkle {
+    position: absolute;
+    font: 400 18px/1 var(--mono);
+    color: var(--zi-gold);
+    text-shadow: 0 0 10px var(--zi-gold);
+    opacity: 0;
+  }
+  .zi-ready {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 14px;
+    white-space: pre;
+  }
+
+  /* ---------- ipucu ---------- */
+  .zi-hint {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 500 12.5px var(--mono);
+    letter-spacing: 0.06em;
+    color: rgba(233, 228, 242, 0.86);
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.5s ease,
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .zi.ready .zi-hint {
+    opacity: 1;
+    transform: none;
+  }
+  .zi.ready .zi-hint-t {
+    animation: zi-pulse 1.6s ease-in-out infinite;
+  }
+  .zi-hint kbd,
+  .zi-skip kbd {
+    font: 500 10.5px var(--mono);
+    padding: 2px 6px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom-width: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(233, 228, 242, 0.85);
+  }
+  @keyframes zi-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* ---------- çöküş, patlama ---------- */
+  .zi-spark {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8px;
+    height: 16px;
+    border-radius: 2px;
+    background: #fff;
+    box-shadow:
+      0 0 6px 2px #fff,
+      0 0 22px 6px rgba(242, 138, 192, 0.85),
+      0 0 60px 18px rgba(245, 196, 94, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, width, height;
+  }
+  .zi-flash {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at var(--fx, 50%) var(--fy, 50%),
+      #fff 0%,
+      #fff 30%,
+      rgba(255, 246, 228, 0.96) 60%,
+      rgba(255, 236, 214, 0.92) 100%
+    );
+  }
+  .zi-shock {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100px;
+    margin: -50px 0 0 -50px;
+    border-radius: 50%;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 0 18px rgba(255, 220, 160, 0.9),
+      inset 0 0 18px rgba(242, 138, 192, 0.6);
+    opacity: 0;
+  }
+
+  /* ---------- atla ---------- */
+  .zi-skip {
+    position: absolute;
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px 8px 15px;
+    font: 500 12.5px var(--mono);
+    letter-spacing: 0.04em;
+    color: rgba(233, 228, 242, 0.72);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition:
+      color 0.2s,
+      background 0.2s,
+      border-color 0.2s,
+      opacity 0.3s;
+  }
+  .zi-skip:hover,
+  .zi-skip:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+  .zi-skip:focus-visible {
+    outline: 2px solid var(--zi-pink);
+    outline-offset: 3px;
+  }
+  .zi.gone .zi-skip {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ---------- alternatif açılış: bigbang bombası ---------- */
+  .zb {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .zb > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .zb path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .zb-rope {
+    stroke: #f0dfb8;
+    stroke-width: 5.5;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  }
+  .zb path.zb-twist {
+    display: none;
+  }
+  .zb-ash {
+    stroke: rgba(255, 190, 150, 0.22);
+    stroke-width: 2.5;
+  }
+  .zb-ember {
+    stroke: #ffb35c;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 6px #ff8a3c) drop-shadow(0 0 14px rgba(242, 138, 192, 0.8));
+    opacity: 0.9;
+  }
+  .zb-bomb {
+    pointer-events: auto;
+    cursor: pointer;
+    outline: none;
+  }
+  .zb-squish {
+    transform-box: fill-box;
+    transform-origin: 50% 60%;
+    transition: scale 0.35s cubic-bezier(0.34, 1.56, 0.5, 1);
+  }
+  .zb-bomb.hover .zb-squish,
+  .zb-bomb:hover .zb-squish,
+  .zb-bomb:focus-visible .zb-squish {
+    scale: 1.06;
+  }
+  .zb-bomb.lit .zb-squish {
+    scale: 1;
+    animation: zb-tick 0.5s ease-in-out infinite;
+  }
+  @keyframes zb-tick {
+    50% {
+      scale: 1.025 0.985;
+    }
+  }
+  .zb-shadow {
+    fill: rgba(0, 0, 0, 0.45);
+    filter: blur(5px);
+  }
+  .zb-hot {
+    fill: #fff3d0;
+    opacity: 0;
+    filter: drop-shadow(0 0 24px #ffd98a);
+  }
+  .zb-shine {
+    fill: rgba(255, 255, 255, 0.3);
+  }
+  .zb-label {
+    font: 600 21px var(--mono);
+    letter-spacing: 0.02em;
+    fill: #fff4d6;
+    filter: drop-shadow(0 0 6px rgba(245, 196, 94, 0.7));
+  }
+  .zb path.zb-under {
+    stroke: var(--zi-pink);
+    stroke-width: 2.5;
+    opacity: 0.8;
+  }
+  .zb-fire {
+    position: absolute;
+    left: -9px;
+    top: -9px;
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 22%, #ffe08a 40%, rgba(255, 138, 60, 0.6) 62%, transparent 72%);
+    box-shadow:
+      0 0 14px 4px rgba(255, 190, 90, 0.9),
+      0 0 34px 10px rgba(242, 138, 192, 0.5);
+  }
+  .zb-fire::before,
+  .zb-fire::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 34px;
+    height: 2px;
+    translate: -50% -50%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+  }
+  .zb-fire::after {
+    rotate: 90deg;
+  }
+  .zb-mouse {
+    position: absolute;
+    left: -4px;
+    top: -2px;
+    width: 30px;
+    height: 30px;
+    opacity: 0;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+  }
+  .zb-mouse svg {
+    width: 100%;
+    height: 100%;
+    transform-origin: 20% 10%;
+  }
+  .zb-click {
+    position: absolute;
+    left: -16px;
+    top: -16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    animation: zb-click 0.5s ease-out forwards;
+  }
+  @keyframes zb-click {
+    from {
+      scale: 0.2;
+      opacity: 1;
+    }
+    to {
+      scale: 1.5;
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .zi-body {
+      height: 292px;
+      padding: 14px 14px;
+      font-size: 12px;
+    }
+    .zi-ready {
+      left: 14px;
+      right: 14px;
+    }
+    .zi-digit {
+      font-size: 128px;
+    }
+    .zi-word {
+      width: 250px;
+    }
+    .zi-ring {
+      width: 160px;
+      height: 160px;
+    }
+    .zi-title {
+      font-size: 11px;
+    }
+  }
+  @media (max-height: 520px) {
+    .zi-body {
+      height: 240px;
+    }
+    .zi-digit {
+      font-size: 110px;
+    }
+    .zi-word {
+      width: 230px;
+    }
+  }
+</style>
