@@ -1,0 +1,21 @@
+---
+// Her yazının kendi sayfası (en). Yazılar learning-sky deposundan gelir (src/data/sky.ts).
+import PostPage from '../../../components/PostPage.astro';
+import { loadSky } from '../../../data/sky';
+
+export async function getStaticPaths() {
+  const posts = await loadSky();
+  return posts.map((post) => {
+    // aynı gezegenin yazıları, en yeniden eskiye
+    const list = posts.filter((p) => p.topic === post.topic);
+    const j = list.indexOf(post);
+    return {
+      params: { slug: post.slug.en },
+      props: { post, older: list[j + 1], newer: list[j - 1], no: list.length - j },
+    };
+  });
+}
+const { post, older, newer, no } = Astro.props;
+---
+
+<PostPage {post} lang="en" {older} {newer} {no} />

@@ -20,6 +20,7 @@ interface GalaxyOptions {
   reduce: boolean;
   onPlanet: (b: PlanetBody) => void;
   onSection: (i: number) => void;
+  onSun: () => void;
   /** Tutulmanın tam anı: yeni tema sayfaya uygulanır, dalga güneşten yayılır. */
   onWave: (x: number, y: number, t: Theme) => void;
   /** Bir gezegen yakından incelenmeye başladı (ya da null: inceleme bitti). */
@@ -788,8 +789,9 @@ export class Galaxy {
     const b = direct;
     if (!b) {
       if (this.ray.intersectObject(this.sun, false).length) {
-        // güneşe ya da kedi-aya dokunmak onu sadece canlandırır; tema yalnızca üstteki düğmeyle değişir
+        // güneşe dokununca aya, aya dokununca güneşe döner (gece ile gündüz değişir)
         (this.moonness > 0.5 ? this.cat : this.sunChar).poke();
+        this.o.onSun();
       }
       return;
     }

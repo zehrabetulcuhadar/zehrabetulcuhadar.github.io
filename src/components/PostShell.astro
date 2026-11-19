@@ -1,0 +1,208 @@
+---
+/*
+  Yazı sayfalarının ortak iskeleti: galaksi (3B sahne) yüklenmez, sayfa düz HTML'dir.
+  Arama motorları bu sayfaları okur; ziyaretçi buradan galaksiye geçebilir.
+*/
+import Base from '../layouts/Base.astro';
+import '../styles/ui.css';
+import '../styles/reader.css';
+import type { Lang } from '../data/sky';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  tone: string;
+  crumb: string;
+  /** Aynı sayfanın diğer dildeki adresi */
+  other: string;
+  alternates: { lang: string; href: string }[];
+  jsonld?: object;
+  type?: 'website' | 'article';
+  published?: string;
+  tags?: string[];
+}
+const { lang, title, description, tone, crumb, other, alternates, jsonld, type, published, tags } = Astro.props;
+const en = lang === 'en';
+---
+
+<Base {title} {description} {lang} {alternates} {jsonld} {type} {published} {tags}>
+  <div class="rd-page" style={`--tone:${tone}`}>
+    <header class="rd-bar">
+      <a class="rd-back" href="/">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H6M11 6l-6 6 6 6"></path></svg>
+        {en ? 'To the galaxy' : 'Galaksiye git'}
+      </a>
+      <span class="rd-crumb"><i aria-hidden="true"></i><span>{crumb}</span></span>
+      <a class="rd-other" href={other} hreflang={en ? 'tr' : 'en'} lang={en ? 'tr' : 'en'}
+        >{en ? 'Türkçe' : 'English'}</a
+      >
+    </header>
+    <slot />
+    <footer class="rd-foot">
+      <a href="/">Learning Galaxy <em>by Zero</em></a>
+      <span>·</span>
+      <a href={en ? '/en/posts/' : '/yazilar/'}>{en ? 'All posts' : 'Tüm yazılar'}</a>
+      <span>·</span>
+      <a href={en ? '/en/rss.xml' : '/rss.xml'}>RSS</a>
+      <p class="rd-copy">© 2026 Zehra Betül Çuhadar · {en ? 'All rights reserved' : 'Tüm hakları saklıdır'}</p>
+    </footer>
+  </div>
+  <!-- İngilizce sayfaya gelen ziyaretçi galaksiye geçince site de İngilizce açılsın (daha önce dil seçmediyse) -->
+  <script is:inline define:vars={{ lang }}>
+    try {
+      if (lang === 'en' && !localStorage.getItem('lang')) localStorage.setItem('lang', 'en');
+    } catch (e) {}
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-rd-copy]');
+      if (!b) return;
+      var pre = b.closest('.rd-code').querySelector('pre');
+      var old = b.textContent;
+      var done = function () {
+        b.textContent = lang === 'en' ? 'copied ✓' : 'kopyalandı ✓';
+        setTimeout(function () {
+          b.textContent = old;
+        }, 1600);
+      };
+      if (navigator.clipboard) navigator.clipboard.writeText(pre.textContent).then(done, done);
+      else done();
+    });
+  </script>
+</Base>
+
+<style is:global>
+  /* yazı sayfası normal bir belge gibi kayar */
+  html:has(.rd-page) {
+    scrollbar-width: thin;
+    scroll-behavior: smooth;
+  }
+  html:has(.rd-page)::-webkit-scrollbar {
+    display: block;
+  }
+  .rd-page {
+    min-height: 100svh;
+    color: var(--fg);
+  }
+  .rd-page .rd-article > * {
+    opacity: 1;
+    translate: none;
+  }
+  .rd-page .rd-bar {
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(12px);
+  }
+  .rd-page .rd-back {
+    text-decoration: none;
+  }
+  .rd-other {
+    margin-left: auto;
+    padding: 6px 12px;
+    font: 500 12px var(--mono);
+    color: var(--fg);
+    text-decoration: none;
+    border-radius: 999px;
+    background: var(--chip);
+    border: 1px solid var(--edge);
+  }
+  .rd-other:hover {
+    border-color: var(--tone);
+  }
+  .rd-page .rd-next a {
+    display: grid;
+    gap: 4px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--fg);
+    border-radius: 20px;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    box-shadow: var(--clay-sm);
+    transition: translate 0.25s var(--spring);
+  }
+  .rd-page .rd-next a:hover {
+    translate: 0 -3px;
+  }
+  .rd-page .rd-next a:last-child {
+    text-align: right;
+  }
+  .rd-page .rd-next span {
+    display: block;
+  }
+  .rd-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+    padding: 10px 16px 42px;
+    font: 500 12.5px var(--mono);
+    color: var(--muted);
+  }
+  .rd-copy {
+    flex-basis: 100%;
+    margin: 4px 0 0;
+    text-align: center;
+    font-size: 11px;
+  }
+  .rd-foot a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--line-strong);
+  }
+  .rd-foot a:hover {
+    color: var(--fg);
+  }
+  .rd-foot em {
+    font-style: normal;
+    color: var(--star);
+  }
+  /* tüm yazılar listesi */
+  .rd-list h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .rd-list h2 small {
+    font: 500 12px var(--mono);
+    color: var(--muted);
+  }
+  .rd-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .rd-list li a {
+    display: grid;
+    gap: 3px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--fg);
+    border-radius: 20px;
+    background: var(--bg-2);
+    border: 1px solid var(--edge);
+    transition: translate 0.25s var(--spring);
+  }
+  .rd-list li a:hover {
+    translate: 4px 0;
+    border-color: var(--c);
+  }
+  .rd-list li b {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+  .rd-list li span {
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .rd-list li small {
+    font: 500 11px var(--mono);
+    color: var(--muted);
+  }
+  @media (max-width: 620px) {
+    .rd-page .rd-next a:last-child {
+      text-align: left;
+    }
+  }
+</style>

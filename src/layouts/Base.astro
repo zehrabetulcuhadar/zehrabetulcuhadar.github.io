@@ -4,27 +4,70 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description: string;
+  /** Sayfanın dili (varsayılan Türkçe) */
+  lang?: 'tr' | 'en';
+  /** Yazı sayfalarında 'article' */
+  type?: 'website' | 'article';
+  /** Aynı sayfanın diğer dillerdeki adresleri (hreflang) */
+  alternates?: { lang: string; href: string }[];
+  /** Arama motorları için yapısal veri (JSON-LD) */
+  jsonld?: object | object[];
+  /** Yazı sayfaları: yayın tarihi (YYYY-AA-GG) ve etiketler */
+  published?: string;
+  tags?: string[];
 }
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  lang = 'tr',
+  type = 'website',
+  alternates = [],
+  jsonld,
+  published,
+  tags = [],
+} = Astro.props;
+const abs = (p: string) => new URL(p, Astro.site).href;
+const canonical = abs(Astro.url.pathname);
+const ld = jsonld ? JSON.stringify(jsonld).replace(/</g, '\\u003c') : '';
 ---
 
 <!doctype html>
-<html lang="tr">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="author" content="Zehra Betül Çuhadar" />
+    <meta name="copyright" content="© 2026 Zehra Betül Çuhadar. Tüm hakları saklıdır. All rights reserved." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href={canonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={abs(a.href)} />)}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Learning Galaxy by Zero"
+      href={lang === 'en' ? '/en/rss.xml' : '/rss.xml'}
+    />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <meta property="og:site_name" content="Learning Galaxy by Zero" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
-    <meta property="og:image" content={new URL('/og.png', Astro.site)} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={lang === 'en' ? 'en_US' : 'tr_TR'} />
+    <meta property="og:image" content={abs('/og.png')} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {published && <meta property="article:published_time" content={`${published}T09:00:00+03:00`} />}
+    {published && <meta property="article:author" content="Zehra Betül Çuhadar" />}
+    {tags.map((t) => <meta property="article:tag" content={t} />)}
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={abs('/og.png')} />
+    {ld && <script is:inline type="application/ld+json" set:html={ld} />}
     <meta name="theme-color" content="#f6ece8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#14112a" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

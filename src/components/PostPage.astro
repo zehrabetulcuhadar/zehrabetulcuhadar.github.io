@@ -1,0 +1,118 @@
+---
+/* Bir yazının kendi sayfası (Türkçe ya da İngilizce). */
+import PostShell from './PostShell.astro';
+import { topics } from '../data/site';
+import { postPath, type Lang, type SkyPost } from '../data/sky';
+import { postLd } from '../data/seo';
+
+interface Props {
+  post: SkyPost;
+  lang: Lang;
+  /** Aynı gezegendeki daha eski ve daha yeni yazı */
+  older?: SkyPost;
+  newer?: SkyPost;
+  /** Gezegendeki sıra numarası (en eski yazı 1) */
+  no: number;
+}
+const { post, lang, older, newer, no } = Astro.props;
+const en = lang === 'en';
+const topic = topics.find((t) => t.id === post.topic);
+const body = post.body[lang];
+const date = new Date(post.date + 'T12:00:00').toLocaleDateString(en ? 'en-GB' : 'tr-TR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const otherLang: Lang = en ? 'tr' : 'en';
+---
+
+<PostShell
+  {lang}
+  title={`${post.title[lang]} · Learning Galaxy by Zero`}
+  description={post.summary[lang]}
+  tone={topic?.color ?? '#F7C548'}
+  crumb={topic?.name ?? ''}
+  other={postPath(post, otherLang)}
+  alternates={[
+    { lang: 'tr', href: postPath(post, 'tr') },
+    { lang: 'en', href: postPath(post, 'en') },
+    { lang: 'x-default', href: postPath(post, 'tr') },
+  ]}
+  jsonld={postLd(post, lang, topic?.name ?? '')}
+  type="article"
+  published={post.date}
+  tags={post.tags}
+>
+  <div class="rd-wrap">
+    <aside class="rd-toc" aria-label={en ? 'In this post' : 'Bu yazıda'}>
+      <p>{en ? 'In this post' : 'Bu yazıda'}</p>
+      <ol>
+        {
+          body.toc.map(([id, t]) => (
+            <li>
+              <a href={`#${id}`}>{t}</a>
+            </li>
+          ))
+        }
+      </ol>
+    </aside>
+    <main>
+      <article class="rd-article">
+        <p class="rd-kicker">
+          {topic?.name}
+          {en ? `planet · star ${no}` : `gezegeni · ${no}. yıldız`}
+        </p>
+        <h1>{post.title[lang]}</h1>
+        <p class="rd-meta">
+          <span><time datetime={post.date}>{date}</time></span>
+          <span>{en ? `${post.min[lang]} min read` : `${post.min[lang]} dk okuma`}</span>
+        </p>
+        <svg class="rd-const" viewBox="0 0 600 40" aria-hidden="true">
+          <path d="M6 28 L120 10 L230 30 L352 8 L470 26 L594 12"></path>
+          <g>
+            <circle cx="6" cy="28" r="3"></circle><circle cx="120" cy="10" r="4.5"></circle><circle
+              cx="230"
+              cy="30"
+              r="3"></circle><circle cx="352" cy="8" r="5"></circle><circle cx="470" cy="26" r="3"></circle><circle
+              cx="594"
+              cy="12"
+              r="4"></circle>
+          </g>
+        </svg>
+
+        <div class="rd-body" set:html={body.html} />
+
+        <p class="rd-tags">{post.tags.map((t) => <span>#{t}</span>)}</p>
+        <p class="rd-src">
+          <a href={post.url} target="_blank" rel="noopener"
+            >{en ? 'This post and its example code on GitHub →' : "Bu yazı ve örnek kodu GitHub'da →"}</a
+          >
+        </p>
+
+        <nav class="rd-next" aria-label={en ? 'Other stars' : 'Diğer yıldızlar'}>
+          {
+            older ? (
+              <a href={postPath(older, lang)} rel="prev">
+                <small>{en ? '← previous star' : '← önceki yıldız'}</small>
+                <b>{older.title[lang]}</b>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+          {
+            newer ? (
+              <a href={postPath(newer, lang)} rel="next">
+                <small>{en ? 'next star →' : 'sonraki yıldız →'}</small>
+                <b>{newer.title[lang]}</b>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+        </nav>
+        <p class="rd-sign">Zero ✦</p>
+      </article>
+    </main>
+  </div>
+</PostShell>

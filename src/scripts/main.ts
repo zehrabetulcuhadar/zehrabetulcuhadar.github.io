@@ -153,6 +153,7 @@ try {
     onInspect: (b, i, n) => showInspect(b, i, n),
     onStar: (b, j) => openReader(b.opts.char ?? '', j),
     onSection: (i) => setSection(i),
+    onSun: () => toggleTheme(),
     onWave: reveal,
     holdIntro: booting,
   });
@@ -175,6 +176,7 @@ if (booting) runIntro({ galaxy, lenis });
       })
       .join('');
     $('sky-latest').hidden = false;
+    if (lang === 'en') ($('sky-all') as HTMLAnchorElement).href = '/en/posts/';
     $('sky-topics').innerHTML = topics
       .map((t) => {
         const n = real.filter((p) => p.planet === t.id).length;
@@ -1297,6 +1299,7 @@ function fillReader() {
     .forEach((b) => b.classList.toggle('on', b.dataset.rdLang === l));
   $('rd-tags').innerHTML = post.tags.map((t) => `<span>#${esc(t)}</span>`).join('');
   ($('rd-src') as HTMLAnchorElement).href = post.url;
+  ($('rd-link') as HTMLAnchorElement).href = post.paths[l] ?? '/yazilar/';
   const body = $('rd-body');
   const toc = $('rd-toc');
   body.classList.add('loading');

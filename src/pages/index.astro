@@ -8,6 +8,7 @@ import '../styles/ui.css';
 import '../styles/theme-switch.css';
 import { experience, skills, links, badgeColors, sections } from '../data/site';
 import { loadSky, skyIndex } from '../data/sky';
+import { homeLd } from '../data/seo';
 
 // Yazı listesi learning-sky deposundan gelir; sayfaya küçük bir JSON olarak gömülür.
 const skyJson = JSON.stringify(skyIndex(await loadSky())).replace(/</g, '\\u003c');
@@ -29,8 +30,9 @@ const tones = ['#C2577E', '#F2766B', '#F7C548', '#7C8CF2', '#4FC7B8'];
 ---
 
 <Base
-  title="Zehra Betül Çuhadar · Galaksim"
-  description="Yazılım geliştirme uzmanı Zehra'nın kişisel sitesi. Öğrendiği her konu bir yıldız, her başlık bir gezegen."
+  title="Zehra Betül Çuhadar · Learning Galaxy by Zero"
+  description="Yazılım geliştirme uzmanı Zehra Betül Çuhadar'ın kişisel sitesi ve blogu. Angular, .NET, yazılım temelleri, mimari ve yapay zekâ üzerine notlar: öğrendiği her konu bir yıldız, her başlık bir gezegen."
+  jsonld={homeLd}
 >
   <script type="application/json" id="sky-data" set:html={skyJson} />
   <Intro />
@@ -246,6 +248,7 @@ const tones = ['#C2577E', '#F2766B', '#F7C548', '#7C8CF2', '#4FC7B8'];
           <p class="sky-h">Son yıldızlar</p>
           <div id="sky-latest-list"></div>
         </div>
+        <a class="sky-all" id="sky-all" href="/yazilar/">Tüm yazılar →</a>
         <div class="sky-topics" id="sky-topics" hidden></div>
       </div>
     </section>
@@ -296,6 +299,7 @@ const tones = ['#C2577E', '#F2766B', '#F7C548', '#7C8CF2', '#4FC7B8'];
             }
           </div>
           <p class="foot">Zehra tarafından, öğrenilirken yazılıyor ✦</p>
+          <p class="copy">© 2026 Zehra Betül Çuhadar · Tüm hakları saklıdır</p>
           <p class="replay">
             Açılışı yeniden izle:
             <button type="button" data-replay="ide">kod</button>
@@ -1121,6 +1125,11 @@ const tones = ['#C2577E', '#F2766B', '#F7C548', '#7C8CF2', '#4FC7B8'];
   .links a:hover em {
     translate: 3px -3px;
     color: var(--accent);
+  }
+  .copy {
+    margin: 6px 0 0;
+    font: 500 10.5px var(--mono);
+    color: var(--muted);
   }
   .foot {
     margin-top: 18px !important;

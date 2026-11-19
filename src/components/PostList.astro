@@ -1,0 +1,92 @@
+---
+/* Tüm yazılar: gezegenlere göre gruplanmış düz liste (arama motorları ve hızlı göz atmak için). */
+import PostShell from './PostShell.astro';
+import { topics } from '../data/site';
+import { listPath, loadSky, postPath, type Lang } from '../data/sky';
+import { homeLd } from '../data/seo';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const en = lang === 'en';
+const posts = await loadSky();
+const groups = topics.map((t) => ({ t, list: posts.filter((p) => p.topic === t.id) })).filter((g) => g.list.length);
+const fmt = (d: string) =>
+  new Date(d + 'T12:00:00').toLocaleDateString(en ? 'en-GB' : 'tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+---
+
+<PostShell
+  {lang}
+  title={en ? 'All posts · Learning Galaxy by Zero' : 'Tüm yazılar · Learning Galaxy by Zero'}
+  description={en
+    ? 'All of Zehra Betül Çuhadar’s notes on software fundamentals, frontend, backend, data, architecture and AI, grouped by topic.'
+    : 'Zehra Betül Çuhadar’ın yazılım temelleri, frontend, backend, veri, mimari ve yapay zekâ üzerine tüm notları, konulara göre.'}
+  tone="#7C8CF2"
+  crumb={en ? 'All posts' : 'Tüm yazılar'}
+  other={listPath(en ? 'tr' : 'en')}
+  alternates={[
+    { lang: 'tr', href: listPath('tr') },
+    { lang: 'en', href: listPath('en') },
+    { lang: 'x-default', href: listPath('tr') },
+  ]}
+  jsonld={homeLd}
+>
+  <div class="rd-wrap">
+    <aside class="rd-toc" aria-label={en ? 'Planets' : 'Gezegenler'}>
+      <p>{en ? 'Planets' : 'Gezegenler'}</p>
+      <ol>
+        {
+          groups.map((g) => (
+            <li>
+              <a href={`#${g.t.id}`}>{g.t.name}</a>
+            </li>
+          ))
+        }
+      </ol>
+    </aside>
+    <main>
+      <article class="rd-article rd-list">
+        <p class="rd-kicker">Learning Galaxy by Zero</p>
+        <h1>{en ? 'All posts' : 'Tüm yazılar'}</h1>
+        <p class="rd-lead">
+          {
+            en
+              ? `Every post is a star, every topic a planet. ${posts.length} stars so far.`
+              : `Her yazı bir yıldız, her konu bir gezegen. Şimdilik ${posts.length} yıldız var.`
+          }
+        </p>
+        {posts.length === 0 && <p>{en ? 'The first star is on its way.' : 'İlk yıldız yolda.'}</p>}
+        {
+          groups.map((g) => (
+            <section style={`--c:${g.t.color};--tone:${g.t.color}`}>
+              <h2 id={g.t.id}>
+                {g.t.name}
+                <small>{g.list.length} ✦</small>
+              </h2>
+              <ul>
+                {g.list.map((p) => (
+                  <li>
+                    <a href={postPath(p, lang)}>
+                      <small>
+                        <time datetime={p.date}>{fmt(p.date)}</time> ·{' '}
+                        {en ? `${p.min[lang]} min read` : `${p.min[lang]} dk okuma`}
+                      </small>
+                      <b>{p.title[lang]}</b>
+                      <span>{p.summary[lang]}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        }
+        <p class="rd-sign">Zero ✦</p>
+      </article>
+    </main>
+  </div>
+</PostShell>

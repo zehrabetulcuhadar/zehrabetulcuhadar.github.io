@@ -235,6 +235,11 @@ async function load(): Promise<SkyPost[]> {
 let cache: Promise<SkyPost[]> | null = null;
 export const loadSky = () => (cache ??= load());
 
+/** Yazının sitedeki kendi sayfası: /yazi/<slug>/ (Türkçe) ve /en/post/<slug>/ (İngilizce). */
+export const postPath = (p: { slug: Two }, l: Lang) => (l === 'en' ? `/en/post/${p.slug.en}/` : `/yazi/${p.slug.tr}/`);
+/** Tüm yazılar sayfası. */
+export const listPath = (l: Lang) => (l === 'en' ? '/en/posts/' : '/yazilar/');
+
 /** Sayfaya gömülen hafif liste (yazı gövdeleri ayrı dosyalarda durur). */
 export const skyIndex = (posts: SkyPost[]) =>
   posts.map((p) => ({
@@ -246,4 +251,5 @@ export const skyIndex = (posts: SkyPost[]) =>
     tags: p.tags,
     min: p.min,
     url: p.url,
+    path: { tr: postPath(p, 'tr'), en: postPath(p, 'en') },
   }));

@@ -3,6 +3,8 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Zehra Betül Çuhadar",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

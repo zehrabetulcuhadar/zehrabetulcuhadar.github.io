@@ -29,6 +29,8 @@ export interface Post {
   mins: Record<string, number>;
   /** yazının GitHub'daki klasörü */
   url: string;
+  /** yazının sitedeki kendi sayfası, iki dilde */
+  paths: Record<string, string>;
   /** "#dolu" denemesinin örnek yıldızı: okuma sayfası açılmaz */
   demo?: boolean;
 }
@@ -94,6 +96,7 @@ export const posts: Post[] = (() => {
       tags: string[];
       min: Record<string, number>;
       url: string;
+      path: Record<string, string>;
     }[];
     return raw.map((p) => ({
       id: p.id,
@@ -106,6 +109,7 @@ export const posts: Post[] = (() => {
       titles: p.title,
       mins: p.min,
       url: p.url,
+      paths: p.path,
     }));
   } catch {
     return [];
@@ -189,6 +193,7 @@ if (typeof location !== 'undefined' && location.hash === '#dolu') {
         titles: {},
         mins: {},
         url: '',
+        paths: {},
         demo: true,
       });
   });

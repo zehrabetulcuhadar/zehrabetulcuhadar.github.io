@@ -1031,3 +1031,27 @@
     animation: none;
   }
 }
+
+/* gökyüzüm: tüm yazılar sayfasına bağlantı */
+.sky-all {
+  display: inline-block;
+  margin-top: 10px;
+  font: 500 12px var(--mono);
+  color: var(--muted);
+  text-decoration: none;
+  text-shadow: none;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.sky-all:hover {
+  color: var(--fg);
+}
+.rd-src {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+@media (max-height: 640px) {
+  .sky-all {
+    display: none;
+  }
+}
