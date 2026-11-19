@@ -519,10 +519,10 @@
 .player:empty {
   display: none;
 }
-.player iframe {
+.np-frame iframe {
   display: block;
   width: 100%;
-  height: clamp(152px, calc(78vh - 500px), 352px);
+  height: 100%;
   border: 0;
   border-radius: 14px;
   background: var(--inset);
@@ -566,13 +566,10 @@
   :root .drawer.music {
     max-height: 66vh;
   }
-  .player iframe {
-    height: 152px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .deck.down .deck-notes i,
-  .player iframe,
+  .np-frame iframe,
   .pl-note {
     animation: none;
   }
@@ -645,6 +642,392 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .vangogh i {
+    animation: none;
+  }
+}
+
+/* ---------- gökyüzüm: son yıldızlar ve konular ---------- */
+.sky-latest {
+  margin-top: 18px;
+  text-shadow: none;
+}
+.sky-h {
+  margin: 0 0 6px;
+  font: 600 20px/1 var(--hand);
+  color: var(--muted);
+}
+#sky-latest-list {
+  display: grid;
+  gap: 7px;
+}
+.sky-post {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 10px;
+  width: 100%;
+  padding: 9px 14px 9px 12px;
+  text-align: left;
+  border-radius: 16px;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--edge);
+  box-shadow: var(--clay-sm);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: translate 0.25s var(--spring);
+}
+.sky-post:hover {
+  translate: 3px 0;
+}
+.sky-post i {
+  grid-row: span 2;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #fff 0 7%, color-mix(in srgb, var(--c) 55%, #fff) 30%, var(--c) 78%);
+}
+.sky-post b {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.sky-post small {
+  font: 500 10.5px var(--mono);
+  color: var(--muted);
+}
+.sky-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  text-shadow: none;
+}
+.sky-topics button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  font: 500 11px var(--mono);
+  color: var(--fg);
+  border-radius: 999px;
+  background: var(--chip);
+  border: 1px solid var(--edge);
+  cursor: pointer;
+}
+.sky-topics button:hover {
+  border-color: var(--c);
+}
+.sky-topics button i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.sky-topics button small {
+  color: var(--muted);
+}
+@media (max-width: 899px) {
+  .sky-latest {
+    margin-top: 12px;
+    max-width: 290px;
+  }
+  .sky-post:nth-child(n + 3),
+  .sky-topics {
+    display: none;
+  }
+  .sky-post {
+    padding: 7px 12px 7px 10px;
+  }
+  .sky-post b {
+    font-size: 13px;
+  }
+}
+@media (max-height: 640px) {
+  .sky-latest,
+  .sky-topics {
+    display: none;
+  }
+}
+
+/* ---------- kartın devamı var: altta küçük bir ok ---------- */
+.panel-more {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 12px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 50%;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: 0;
+  box-shadow: var(--clay-sm);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.panel.more .panel-more {
+  opacity: 1;
+  pointer-events: auto;
+  animation: more-bob 1.6s ease-in-out infinite;
+}
+@keyframes more-bob {
+  50% {
+    translate: 0 4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel.more .panel-more {
+    animation: none;
+  }
+}
+
+/* ---------- serbest gezinti: gezegen şeridinin devamı var ---------- */
+.hud-bottom.more .hud-chips {
+  -webkit-mask: linear-gradient(90deg, #000 calc(100% - 76px), transparent calc(100% - 18px));
+  mask: linear-gradient(90deg, #000 calc(100% - 76px), transparent calc(100% - 18px));
+}
+.hud-next {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right, 0px));
+  bottom: 9px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 50%;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: 0;
+  box-shadow: var(--clay-sm);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.hud .hud-next {
+  pointer-events: none;
+}
+.hud-bottom.more .hud-next {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- bölüm çubukları: masaüstünde alttaki menü, telefonda sağdaki çizgi ---------- */
+@media (min-width: 900px) and (min-height: 521px) {
+  .pagebar {
+    display: none;
+  }
+}
+@media (max-width: 350px) {
+  .brand .nick {
+    display: none;
+  }
+}
+
+/* ---------- kalıcı müzik çalar: çerçeve çekmecenin dışında yaşar, köşede küçük plak ---------- */
+.np-frame {
+  position: fixed;
+  z-index: 9;
+  left: 0;
+  top: 0;
+  width: 300px;
+  height: 152px;
+  border-radius: 14px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.np-frame.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.np-frame > div {
+  width: 100%;
+  height: 100%;
+}
+.pl-slot {
+  border-radius: 14px;
+  background: var(--inset);
+}
+.pl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 2px 2px;
+}
+.pl-row .pl-open {
+  margin: 0;
+}
+:root:root .pl-stop {
+  font: 500 11.5px var(--mono);
+  padding: 5px 11px;
+  border-radius: 999px;
+  color: var(--fg);
+  background: var(--chip);
+  border: 1px solid var(--edge);
+  box-shadow: none;
+  cursor: pointer;
+}
+:root:root .pl-stop:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pl-tip {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.np {
+  position: fixed;
+  z-index: 9;
+  left: max(22px, env(safe-area-inset-left, 0px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 6px 8px 6px 6px;
+  border-radius: 999px;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--edge);
+  box-shadow: var(--clay-sm);
+  backdrop-filter: blur(12px);
+  animation: np-in 0.5s var(--spring) both;
+  transition: bottom 0.4s var(--soft);
+}
+@keyframes np-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+}
+.exploring .np {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 118px);
+}
+.reading .np,
+.scoping .np,
+.intro .np {
+  display: none;
+}
+:root:root .np-disc {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+.np .vinyl {
+  display: grid;
+  width: 100%;
+  height: 100%;
+}
+.np.spin .vinyl {
+  animation: np-spin 3.3s linear infinite;
+}
+@keyframes np-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.np-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
+.np-text small {
+  font: 500 9.5px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.np-text b {
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root:root .np-btn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 50%;
+  color: var(--fg);
+  background: var(--chip);
+  border: 1px solid var(--edge);
+  box-shadow: none;
+  cursor: pointer;
+}
+:root:root .np-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.np-tip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: max-content;
+  max-width: min(260px, calc(100vw - 32px));
+  margin: 0;
+  padding: 9px 13px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  border-radius: 16px 16px 16px 4px;
+  color: var(--fg);
+  background: var(--card);
+  border: 1px solid var(--edge);
+  box-shadow: var(--clay-sm);
+}
+/* telefonda kartlar altta durur: küçük plak sağ üstte, teleskobun altında */
+@media (max-width: 899px) {
+  .np {
+    left: auto;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: auto;
+    top: calc(env(safe-area-inset-top, 0px) + 138px);
+    gap: 6px;
+    padding: 5px;
+  }
+  .exploring .np {
+    bottom: auto;
+  }
+  .np-text {
+    display: none;
+  }
+  :root:root .np-disc {
+    width: 40px;
+    height: 40px;
+  }
+  .np-tip {
+    left: auto;
+    right: 0;
+    bottom: auto;
+    top: calc(100% + 10px);
+    border-radius: 16px 4px 16px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .np,
+  .np.spin .vinyl {
     animation: none;
   }
 }

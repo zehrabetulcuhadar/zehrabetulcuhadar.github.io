@@ -14,6 +14,9 @@
     var seen = false;
     try {
       seen = !!sessionStorage.getItem('zero-intro');
+      // uzun açılış her yeni sekmede baştan oynamasın: bir kez izleyen 7 gün boyunca kısa açılışı görür
+      var at = +localStorage.getItem('zero-intro-at');
+      if (at && Date.now() - at < 7 * 864e5) seen = true;
     } catch (e) {}
     var h = location.hash;
     // #bomba / #terminal: o açılışı (oturumda daha önce oynamış olsa da) yeniden oynatır

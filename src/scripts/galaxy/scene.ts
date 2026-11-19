@@ -22,7 +22,6 @@ interface GalaxyOptions {
   onSection: (i: number) => void;
   /** Tutulmanın tam anı: yeni tema sayfaya uygulanır, dalga güneşten yayılır. */
   onWave: (x: number, y: number, t: Theme) => void;
-  onSun: () => void;
   /** Bir gezegen yakından incelenmeye başladı (ya da null: inceleme bitti). */
   onInspect: (b: PlanetBody | null, index: number, total: number) => void;
   /** Bir yazı yıldızına tıklandı. */
@@ -102,7 +101,7 @@ export class Galaxy {
   private theme: Theme = 'day';
   /** Yakından incelenen gezegen: kamera onun çevresinde döner (az/el açıları, zoom çarpanı). */
   private insp: { b: PlanetBody; az: number; el: number; zoom: number } | null = null;
-  private drag: { x: number; y: number; moved: number; pinch: number } | null = null;
+  private drag: { x: number; y: number; x0: number; y0: number; pinch: number } | null = null;
   private touches = new Map<number, { x: number; y: number }>();
   private dragged = false;
   /** Bölüme göre etiketlerin girmemesi gereken ekran alanı (karşılama başlığı, gökyüzü başlığı). */
@@ -137,7 +136,7 @@ export class Galaxy {
   private ray = new THREE.Raycaster();
   private hovered: PlanetBody | null = null;
   private pinned: PlanetBody | null = null;
-  private clock = new THREE.Clock();
+  private lastFrame = performance.now();
   private time = 0;
   private lastPick = 0;
   private section = -1;
@@ -640,7 +639,13 @@ export class Galaxy {
     canvas.addEventListener('pointerdown', (e) => {
       if (!this.insp && !this.explore) return;
       this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      this.drag = { x: e.clientX, y: e.clientY, moved: 0, pinch: this.touches.size === 2 ? dist2() : 0 };
+      this.drag = {
+        x: e.clientX,
+        y: e.clientY,
+        x0: e.clientX,
+        y0: e.clientY,
+        pinch: this.touches.size === 2 ? dist2() : 0,
+      };
       this.dragged = false;
       canvas.setPointerCapture(e.pointerId);
     });
@@ -660,8 +665,9 @@ export class Galaxy {
         dy = e.clientY - D.y;
       D.x = e.clientX;
       D.y = e.clientY;
-      D.moved += Math.abs(dx) + Math.abs(dy);
-      if (D.moved > 6) this.dragged = true;
+      // Dokunuş mu, sürükleme mi? Başlangıç noktasından uzaklığa bakılır (toplam titreşime değil):
+      // parmak dokunurken birkaç piksel oynar, bu bir sürükleme sayılmamalı.
+      if (Math.hypot(e.clientX - D.x0, e.clientY - D.y0) > (e.pointerType === 'mouse' ? 6 : 14)) this.dragged = true;
       if (!I) {
         this.explorePan(dx, dy);
         return;
@@ -749,6 +755,13 @@ export class Galaxy {
       return;
     }
     if (this.scopeOn) return;
+    // gezegenin adına tıklamak da gezegeni açar
+    const lb = (e.target as HTMLElement).closest('.planet-label');
+    if (lb) {
+      const named = this.bodies.find((x) => x.label === lb);
+      if (named && this.insp?.b !== named) this.inspect(named);
+      return;
+    }
     this.pointer.x = (e.clientX / innerWidth) * 2 - 1;
     this.pointer.y = -(e.clientY / innerHeight) * 2 + 1;
     if (!this.insp && !this.explore && this.sgrHit(e.clientX, e.clientY)) {
@@ -764,17 +777,19 @@ export class Galaxy {
       this.alien.scare();
       return;
     }
-    const st = this.pickStar(e.clientX, e.clientY, this.coarse ? 26 : 16);
+    const direct = this.pick() ?? this.pickNear(e.clientX, e.clientY, this.coarse ? 48 : 20);
+    let st = this.pickStar(e.clientX, e.clientY, this.coarse ? 26 : 16);
+    // uzaktan bakarken yıldızlar gezegene çok yakın durur: gezegen henüz açık değilse yıldız için tam isabet gerekir
+    if (st && direct && this.insp?.b !== st.b) st = this.pickStar(e.clientX, e.clientY, 9);
     if (st) {
       this.o.onStar(st.b, st.j);
       return;
     }
-    const b = this.pick() ?? (this.coarse ? this.pickNear(e.clientX, e.clientY, 44) : null);
+    const b = direct;
     if (!b) {
       if (this.ray.intersectObject(this.sun, false).length) {
-        // güneşe de kedi-aya da dokunmak gece ile gündüzü değiştirir
+        // güneşe ya da kedi-aya dokunmak onu sadece canlandırır; tema yalnızca üstteki düğmeyle değişir
         (this.moonness > 0.5 ? this.cat : this.sunChar).poke();
-        this.o.onSun();
       }
       return;
     }
@@ -836,7 +851,9 @@ export class Galaxy {
   private goal = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
 
   private frame = () => {
-    const raw = this.clock.getDelta();
+    const now = performance.now();
+    const raw = (now - this.lastFrame) / 1000;
+    this.lastFrame = now;
     const dt = Math.min(raw, 0.05);
     const reduce = this.o.reduce;
     this.tunePerf(raw);
@@ -1261,7 +1278,7 @@ export class Galaxy {
       this.tip.dataset.k = b.opts.name;
       const list = b.opts.posts ?? [];
       this.tip.innerHTML =
-        `<small>${b.opts.name} · ${list.length} ${lang === 'en' ? 'stars (sample)' : 'yıldız (örnek)'}</small>` +
+        `<small>${b.opts.name} · ${list.length} ${lang === 'en' ? (list.length === 1 ? 'star' : 'stars') : 'yıldız'}</small>` +
         list
           .slice(0, 5)
           .map((t) => `<span>✦ ${L(t).replace(/</g, '&lt;')}</span>`)
@@ -1272,6 +1289,11 @@ export class Galaxy {
     }
   }
 
+  private topEls = [
+    ...document.querySelectorAll<HTMLElement>(
+      '.top .brand, .top .top-actions, .hud-top, .hud-bottom, .pagebar, .telescope, .np',
+    ),
+  ];
   private updateLabels(sec: number) {
     // önce yakındakiler: üst üste binen etiketlerden arkadaki gizlenir
     const items = this.bodies.map((b) => {
@@ -1289,6 +1311,11 @@ export class Galaxy {
     });
     items.sort((p, q) => p.z - q.z);
     const shown: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    // üst bardaki logo ve düğmelerin altına etiket girmesin
+    for (const el of this.topEls) {
+      const r = el.getBoundingClientRect();
+      if (r.width) shown.push({ x0: r.left - 8, x1: r.right + 8, y0: r.top - 30, y1: r.bottom + 6 });
+    }
     for (const it of items) {
       const b = it.b;
       let vis = it.z < 1 && Math.abs(it.nx) < 1.05 && Math.abs(it.ny) < 1.05 && b.hover < 0.5 && !this.flight;
@@ -1304,6 +1331,7 @@ export class Galaxy {
         else shown.push(box);
       }
       b.label.style.opacity = vis ? '1' : '0';
+      b.label.classList.toggle('on', vis);
       if (vis) {
         b.label.style.left = `${it.x}px`;
         b.label.style.top = `${it.y}px`;

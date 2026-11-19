@@ -195,7 +195,17 @@ a {
   border: 1px solid var(--edge);
   box-shadow: var(--clay-sm);
   backdrop-filter: blur(8px);
-  transition: opacity 0.45s ease;
+  transition:
+    opacity 0.45s ease,
+    scale 0.2s ease;
+  cursor: pointer;
+}
+/* görünen etiket tıklanabilir: gezegeni açar */
+.planet-label.on {
+  pointer-events: auto;
+}
+.planet-label.on:hover {
+  scale: 1.07;
 }
 .planet-label::before {
   content: '';

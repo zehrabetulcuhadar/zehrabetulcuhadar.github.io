@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { clay, glow, rbox, tube, canvasTexture, damp, smooth, ease, OneShot, PAL, type Character } from './kit';
 
+/** Zaten indekssiz olan geometride three.js uyarı verir: yalnızca gerekirse çevir. */
+const flat = (g: THREE.BufferGeometry) => (g.index ? g.toNonIndexed() : g);
+
 /**
  * Backend: sıcak, steampunk makine dairesi gezegeni.
  * Ön yüzde birbirine gerçekten geçen dişliler (doğru oranlarla, ters yönlerde),
@@ -314,11 +317,11 @@ export default function create(): Character {
   doorPivot.position.set(-0.17, -0.5, GZ + 0.035);
   panel.add(doorPivot);
   const doorParts = [
-    rbox(0.33, 0.2, 0.035, 0.035, 2).translate(0.17, 0, 0).toNonIndexed(),
-    new THREE.CylinderGeometry(0.016, 0.016, 0.09, 8).translate(0.29, 0, 0.035).toNonIndexed(),
+    flat(rbox(0.33, 0.2, 0.035, 0.035, 2).translate(0.17, 0, 0)),
+    flat(new THREE.CylinderGeometry(0.016, 0.016, 0.09, 8).translate(0.29, 0, 0.035)),
   ];
   for (const hy of [-0.07, 0.07])
-    doorParts.push(new THREE.IcosahedronGeometry(0.016, 0).translate(0.03, hy, 0.02).toNonIndexed());
+    doorParts.push(flat(new THREE.IcosahedronGeometry(0.016, 0).translate(0.03, hy, 0.02)));
   const door = new THREE.Mesh(
     mergeGeometries(
       doorParts.map((g) => {
@@ -332,7 +335,7 @@ export default function create(): Character {
   doorPivot.add(door);
   const fireMat = glow('#FF9A3C', 0.9);
   const fireGeo = mergeGeometries(
-    [-0.05, 0, 0.05].map((y) => rbox(0.2, 0.022, 0.01, 0.008, 1).translate(0.15, y, 0).toNonIndexed()),
+    [-0.05, 0, 0.05].map((y) => flat(rbox(0.2, 0.022, 0.01, 0.008, 1).translate(0.15, y, 0))),
     false,
   )!;
   const fire = new THREE.Mesh(fireGeo, fireMat);
@@ -650,9 +653,9 @@ export default function create(): Character {
   const NP = emitters.length * PER + WH;
   const puffGeo = mergeGeometries(
     [
-      new THREE.IcosahedronGeometry(1, 1).toNonIndexed(),
-      new THREE.IcosahedronGeometry(0.7, 0).translate(0.75, 0.25, 0).toNonIndexed(),
-      new THREE.IcosahedronGeometry(0.65, 0).translate(-0.7, 0.15, 0.1).toNonIndexed(),
+      flat(new THREE.IcosahedronGeometry(1, 1)),
+      flat(new THREE.IcosahedronGeometry(0.7, 0).translate(0.75, 0.25, 0)),
+      flat(new THREE.IcosahedronGeometry(0.65, 0).translate(-0.7, 0.15, 0.1)),
     ],
     false,
   )!;

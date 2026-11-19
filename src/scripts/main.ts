@@ -9,6 +9,20 @@ import { birthday, playlists, posts, topics } from '../data/site';
 import { ScopeIntro } from './galaxy/scope3d';
 import { introWanted, runIntro } from './intro';
 
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const fmtDate = (d: string, l: string = lang, long = false) =>
+  d
+    ? new Date(d + 'T12:00:00').toLocaleDateString(l === 'en' ? 'en-GB' : 'tr-TR', {
+        day: 'numeric',
+        month: long ? 'long' : 'short',
+        year: 'numeric',
+      })
+    : '';
+const fmtMin = (m: number, l: string = lang) => (l === 'en' ? `${m} min read` : `${m} dk okuma`);
+/** Yazı satırının küçük üst yazısı: tarih ve okuma süresi. */
+const postMeta = (p: (typeof posts)[number]) =>
+  p.demo ? (lang === 'en' ? 'demo star' : 'deneme yıldızı') : `${fmtDate(p.date)} · ${fmtMin(p.min)}`;
+
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -40,7 +54,17 @@ if (lenis) {
 // Oturumun ilk ziyareti: terminal açılışı (intro.ts) Big Bang'i kendisi tetikler.
 // Sonraki ziyaretlerde sadece kısa 3D Big Bang oynar, bitince yazılar belirir.
 const booting = introWanted();
-const shortIntro = !booting && !reduce && scrollY < innerHeight * 0.5;
+// Dil değişince sayfa yeniden kurulur; kaldığın yer (bölüm, açık gezegen, serbest gezinti) geri gelir.
+const swap = (() => {
+  try {
+    const v = sessionStorage.getItem('zero-swap');
+    sessionStorage.removeItem('zero-swap');
+    return v ? (JSON.parse(v) as { y: number; planet: number; explore: boolean }) : null;
+  } catch {
+    return null;
+  }
+})();
+const shortIntro = !booting && !reduce && !swap && scrollY < innerHeight * 0.5;
 if (!booting) document.getElementById('intro')?.remove();
 if (shortIntro) {
   root.classList.add('intro');
@@ -130,7 +154,6 @@ try {
     onStar: (b, j) => openReader(b.opts.char ?? '', j),
     onSection: (i) => setSection(i),
     onWave: reveal,
-    onSun: () => toggleTheme(),
     holdIntro: booting,
   });
   if (shortIntro) galaxy.bigBang();
@@ -140,6 +163,39 @@ try {
   // WebGL yoksa sayfa metin olarak çalışmaya devam eder
 }
 if (booting) runIntro({ galaxy, lenis });
+/* ---------- gökyüzüm: son yıldızlar ve konu sayıları ---------- */
+{
+  const real = posts.filter((p) => !p.demo);
+  if (real.length) {
+    $('sky-latest-list').innerHTML = real
+      .slice(0, 3)
+      .map((p) => {
+        const t = topics.find((x) => x.id === p.planet);
+        return `<button type="button" class="sky-post" data-read-id="${p.id}" style="--c:${t?.color ?? '#F7C548'}"><i></i><b>${esc(p.title)}</b><small>${t?.name ?? ''} · ${fmtDate(p.date)}</small></button>`;
+      })
+      .join('');
+    $('sky-latest').hidden = false;
+    $('sky-topics').innerHTML = topics
+      .map((t) => {
+        const n = real.filter((p) => p.planet === t.id).length;
+        return `<button type="button" data-topic="${t.id}" style="--c:${t.color}"><i></i>${t.name}<small>${n} ✦</small></button>`;
+      })
+      .join('');
+    $('sky-topics').hidden = false;
+  }
+  document.querySelector('.skyhead')?.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const rd = t.closest<HTMLElement>('[data-read-id]');
+    if (rd) {
+      const p = posts.find((x) => x.id === rd.dataset.readId);
+      if (p) openReader(p.planet, posts.filter((x) => x.planet === p.planet).indexOf(p));
+      return;
+    }
+    const tp = t.closest<HTMLElement>('[data-topic]');
+    const b = tp && galaxy?.planets.find((x) => x.opts.char === tp.dataset.topic);
+    if (b) galaxy?.inspect(b);
+  });
+}
 // karşılama yazısının kapladığı yer: oradaki gezegen etiketleri gizlenir
 const heroBox = () => {
   if (!galaxy) return;
@@ -267,25 +323,235 @@ function musicShelf() {
     `<div class="player" id="player"></div>`
   );
 }
+
+/* ---- kalıcı oynatıcı: Spotify çerçevesi çekmecenin dışında yaşar, başka gezegene geçince müzik kesilmez ---- */
+type SpCtrl = {
+  loadUri: (uri: string) => void;
+  togglePlay: () => void;
+  destroy: () => void;
+  addListener: (ev: string, cb: (e: { data: { isPaused: boolean } }) => void) => void;
+};
+type SpApi = {
+  createController: (
+    el: HTMLElement,
+    o: { uri: string; width: string; height: number },
+    cb: (c: SpCtrl) => void,
+  ) => void;
+};
+const np = { id: '', k: -1, color: '', playing: false, known: false, ctrl: null as SpCtrl | null };
+const npFrame = document.createElement('div');
+npFrame.className = 'np-frame';
+const npBox = document.createElement('div');
+npBox.className = 'np';
+npBox.hidden = true;
+npBox.innerHTML =
+  `<button type="button" class="np-disc" id="np-disc"><span class="vinyl" id="np-vinyl"><u></u><i></i></span></button>` +
+  `<span class="np-text"><small id="np-state"></small><b id="np-title"></b></span>` +
+  `<button type="button" class="np-btn" id="np-toggle" hidden></button>` +
+  `<button type="button" class="np-btn" id="np-stop">✕</button>` +
+  `<p class="np-tip" id="np-tip" hidden></p>`;
+document.body.append(npFrame, npBox);
+$('np-disc').setAttribute('aria-label', lang === 'en' ? 'Open the Music planet' : 'Müzik gezegenini aç');
+$('np-stop').setAttribute('aria-label', lang === 'en' ? 'Stop the music' : 'Müziği durdur');
+let spApi: Promise<SpApi> | null = null;
+/** Spotify'ın gömme denetimi: duraklat / devam et düğmesi bununla çalışır. Yüklenemezse düz oynatıcıya düşülür. */
+const loadSpApi = () =>
+  (spApi ??= new Promise<SpApi>((ok, fail) => {
+    (window as unknown as { onSpotifyIframeApiReady: (a: SpApi) => void }).onSpotifyIframeApiReady = ok;
+    const sc = document.createElement('script');
+    sc.src = 'https://open.spotify.com/embed/iframe-api/v1';
+    sc.async = true;
+    sc.onerror = () => fail(new Error('spotify api'));
+    document.head.append(sc);
+    setTimeout(() => fail(new Error('spotify api timeout')), 7000);
+  }));
+const playerH = () => (innerWidth < 900 ? 152 : Math.round(Math.min(352, Math.max(152, innerHeight * 0.78 - 500))));
+function npPaint() {
+  const on = !!np.id;
+  const inMusic = drawer.classList.contains('music') && drawer.classList.contains('open');
+  npBox.hidden = !on || inMusic;
+  if (!on) return;
+  const v = $('np-vinyl');
+  v.style.setProperty('--c', np.color);
+  v.dataset.pl = np.id;
+  v.querySelector('u')!.textContent = String(np.k + 1);
+  v.style.removeProperty('--cover');
+  v.classList.remove('has-cover');
+  const c = covers.get(np.id);
+  if (c?.img) {
+    v.style.setProperty('--cover', `url("${c.img}")`);
+    v.classList.add('has-cover');
+  }
+  $('np-title').textContent = plName(np.id, np.k);
+  const playing = np.known ? np.playing : true;
+  npBox.classList.toggle('spin', playing);
+  $('np-state').textContent = np.known
+    ? playing
+      ? lang === 'en'
+        ? 'now playing'
+        : 'şimdi çalıyor'
+      : lang === 'en'
+        ? 'paused'
+        : 'duraklatıldı'
+    : lang === 'en'
+      ? 'on the turntable'
+      : 'pikapta';
+  const tg = $('np-toggle');
+  tg.hidden = !np.ctrl;
+  tg.textContent = playing ? '❚❚' : '▶';
+  tg.setAttribute('aria-label', playing ? (lang === 'en' ? 'Pause' : 'Duraklat') : lang === 'en' ? 'Play' : 'Devam et');
+}
+/** Oynatıcıyı kurar ya da aynı oynatıcıya yeni listeyi yükler. */
+function mountPlayer(id: string, k: number, color: string) {
+  np.id = id;
+  np.k = k;
+  np.color = color;
+  np.playing = false;
+  np.known = false;
+  const uri = `spotify:playlist:${id}`;
+  if (np.ctrl) {
+    np.ctrl.loadUri(uri);
+    npPaint();
+    return;
+  }
+  const plain = () => {
+    if (np.id !== id || np.ctrl) return;
+    const theme = root.getAttribute('data-theme') === 'night' ? '&theme=0' : '';
+    npFrame.innerHTML = `<iframe title="Spotify" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator${theme}"></iframe>`;
+  };
+  npFrame.innerHTML = '<div></div>';
+  const host = npFrame.firstElementChild as HTMLElement;
+  loadSpApi().then((api) => {
+    if (np.id !== id || !host.isConnected) return;
+    api.createController(host, { uri, width: '100%', height: playerH() }, (ctrl) => {
+      if (!np.id) {
+        ctrl.destroy();
+        return;
+      }
+      np.ctrl = ctrl;
+      if (np.id !== id) ctrl.loadUri(`spotify:playlist:${np.id}`);
+      ctrl.addListener('playback_update', (e) => {
+        np.known = true;
+        np.playing = !e.data.isPaused;
+        npPaint();
+      });
+      npPaint();
+    });
+  }, plain);
+  npPaint();
+}
+/** Müziği tamamen kapatır: plak rafa döner, köşedeki küçük plak kaybolur. */
+function stopMusic() {
+  try {
+    np.ctrl?.destroy();
+  } catch {
+    /* oynatıcı zaten gitmiş */
+  }
+  np.ctrl = null;
+  np.id = '';
+  npFrame.innerHTML = '';
+  npPaint();
+  const deck = document.getElementById('deck');
+  if (deck) {
+    playTimers.forEach(clearTimeout);
+    playTimers = [];
+    deck.classList.remove('has', 'on', 'down', 'busy');
+    const disc = $('deck-disc');
+    spinTo(disc, 0, 500);
+    delete disc.dataset.pl;
+    $('shelf')
+      .querySelectorAll('.vinyl')
+      .forEach((v) => v.classList.remove('out'));
+    $('deck-now').textContent = lang === 'en' ? '♪ pick a record' : '♪ bir plak seç';
+    $('player').innerHTML = '';
+  }
+}
+/** Çekmecedeki oynatıcı yeri: çerçeve bunun tam üstüne oturur. */
+function fillSlot() {
+  const slot = document.getElementById('player');
+  if (!slot || !np.id) return;
+  const open = `<a class="pl-open" href="https://open.spotify.com/playlist/${np.id}" target="_blank" rel="noopener">${lang === 'en' ? 'Open in Spotify' : "Spotify'da aç"} ↗</a>`;
+  const stop = `<button type="button" class="pl-stop" data-pl-stop>${lang === 'en' ? 'Stop the music' : 'Müziği durdur'} ✕</button>`;
+  slot.innerHTML = embedBlocked
+    ? `<p class="pl-note">${lang === 'en' ? 'The player cannot be shown in this preview. On the live site it plays right here.' : 'Oynatıcı bu önizlemede gösterilemiyor. Yayındaki sitede tam burada çalacak.'}</p><div class="pl-row">${stop}${open}</div>`
+    : `<div class="pl-slot" id="pl-slot" style="height:${playerH()}px"></div><div class="pl-row">${stop}${open}</div>` +
+      `<p class="pl-tip">${lang === 'en' ? 'You can keep exploring the galaxy while the music plays: a small record follows you in the corner, and you can stop it from there. Switching the language stops the music.' : 'Müzik çalarken galakside gezmeye devam edebilirsin: küçük bir plak köşede seni takip eder, oradan durdurabilirsin. Dil değişince müzik durur.'}</p>`;
+}
+/** Müzik gezegenine geri dönüldüğünde pikap boş görünmesin: çalan plak yerinde durur. */
+function dressDeck() {
+  const deck = document.getElementById('deck');
+  if (!deck || !np.id) return;
+  const disc = $('deck-disc');
+  disc.dataset.pl = np.id;
+  disc.style.setProperty('--c', np.color);
+  disc.querySelector('u')!.textContent = String(np.k + 1);
+  paintCover(np.id);
+  $('deck-now').textContent = plName(np.id, np.k);
+  $('shelf')
+    .querySelectorAll<HTMLElement>('.vinyl')
+    .forEach((v) => v.classList.toggle('out', v.dataset.pl === np.id));
+  deck.classList.add('has', 'on', 'down');
+  spinTo(disc, 1, 600);
+  fillSlot();
+}
+// çerçeve, çekmecedeki yerinin üstünde durur; çekmece müzikte değilken görünmez ama çalmaya devam eder
+{
+  let shown = false;
+  let tipDone = false;
+  const tick = () => {
+    const slot = document.getElementById('pl-slot');
+    const inMusic = drawer.classList.contains('music') && drawer.classList.contains('open');
+    const show = !!np.id && !!slot && inMusic && !embedBlocked;
+    if (show) {
+      const r = slot!.getBoundingClientRect();
+      const c = $('drawer-body').getBoundingClientRect();
+      const st = npFrame.style;
+      st.left = `${r.left}px`;
+      st.top = `${r.top}px`;
+      st.width = `${r.width}px`;
+      st.height = `${r.height}px`;
+      const top = Math.max(0, c.top - r.top);
+      const bot = Math.max(0, r.bottom - c.bottom);
+      st.clipPath = top || bot ? `inset(${top}px 0 ${bot}px 0 round 14px)` : '';
+    }
+    if (show !== shown) {
+      shown = show;
+      npFrame.classList.toggle('show', show);
+      npFrame.inert = !show;
+    }
+    const mini = !!np.id && !inMusic;
+    if (npBox.hidden === mini) {
+      npPaint();
+      // ilk kez: müziğin sürdüğünü ve nereden durdurulacağını söyle
+      if (mini && !tipDone) {
+        tipDone = true;
+        const tip = $('np-tip');
+        tip.textContent =
+          lang === 'en'
+            ? 'The music keeps playing while you explore. Stop it here.'
+            : 'Sen gezerken müzik çalmaya devam ediyor. Buradan durdurabilirsin.';
+        tip.hidden = false;
+        setTimeout(() => (tip.hidden = true), 7000);
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  npFrame.inert = true;
+  $('np-disc').addEventListener('click', () => {
+    const b = galaxy?.planets.find((x) => x.opts.char === 'music');
+    if (b) galaxy?.inspect(b);
+  });
+  $('np-toggle').addEventListener('click', () => np.ctrl?.togglePlay());
+  $('np-stop').addEventListener('click', stopMusic);
+}
 /** Sayfayı barındıran ortam başka siteleri gömmeye izin vermiyorsa (örneğin önizleme) oynatıcı yerine bağlantı gösterilir. */
 let embedBlocked = false;
 document.addEventListener('securitypolicyviolation', (e) => {
   if (!/frame-src|child-src|default-src/.test(e.violatedDirective) || !/spotify/.test(e.blockedURI)) return;
   embedBlocked = true;
-  const pl = document.getElementById('player');
-  const id = document.getElementById('deck-disc')?.dataset.pl;
-  if (pl && id) pl.innerHTML = playerHtml(id);
+  fillSlot();
 });
-function playerHtml(id: string) {
-  const open = `<a class="pl-open" href="https://open.spotify.com/playlist/${id}" target="_blank" rel="noopener">${lang === 'en' ? 'Open in Spotify' : "Spotify'da aç"} ↗</a>`;
-  if (embedBlocked)
-    return `<p class="pl-note">${lang === 'en' ? 'The player cannot be shown in this preview. On the live site it plays right here.' : 'Oynatıcı bu önizlemede gösterilemiyor. Yayındaki sitede tam burada çalacak.'}</p>${open}`;
-  const theme = root.getAttribute('data-theme') === 'night' ? '&theme=0' : '';
-  return (
-    `<iframe title="Spotify" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator${theme}"></iframe>` +
-    open
-  );
-}
 /** Pikabın dönüşü: plak birden değil, hızlanarak döner ve yavaşlayarak durur. */
 let spin: Animation | null = null;
 let spinRaf = 0;
@@ -332,7 +598,8 @@ function playRecord(btn: HTMLElement) {
   };
   const showPlayer = () => {
     const pl = $('player');
-    pl.innerHTML = playerHtml(id);
+    mountPlayer(id, k, btn.style.getPropertyValue('--c'));
+    fillSlot();
     // telefonda oynatıcı görünür alana gelsin
     const body = $('drawer-body');
     const over = pl.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom;
@@ -447,20 +714,21 @@ function showInspect(b: PlanetBody | null, i: number, n: number) {
     return;
   }
   const list = b.opts.posts ?? [];
+  const plist = posts.filter((p) => p.planet === b.opts.char);
   const sec = SECTION_OF[b.opts.key];
   drawer.classList.remove('open');
   drawer.style.setProperty('--tone', b.opts.color);
   $('drawer-body').innerHTML =
     `<p class="eyebrow">${L(KIND[b.opts.key] ?? 'Gezegen')}</p><h3>${b.opts.name}</h3>` +
     (list.length
-      ? `<p class="lead">${lang === 'en' ? `${list.length} stars (sample posts). Touch one to read it.` : `${list.length} yıldız (örnek yazılar). Okumak için birine dokun.`}</p>` +
+      ? `<p class="lead">${lang === 'en' ? `${list.length} ${list.length === 1 ? 'star' : 'stars'}. Touch one to read it.` : `${list.length} yıldız. Okumak için birine dokun.`}</p>` +
         (list.length > 10
           ? `<input class="post-filter" type="search" placeholder="${lang === 'en' ? 'Search these posts' : 'Bu yazılarda ara'}" aria-label="${lang === 'en' ? 'Search these posts' : 'Bu yazılarda ara'}" />`
           : '') +
-        list
+        plist
           .map(
-            (t, k) =>
-              `<button type="button" class="post" data-read="${k}" style="--k:${Math.min(k, 10)}"><small>${L('örnek yıldız')}</small>${L(t).replace(/</g, '&lt;')}</button>`,
+            (p, k) =>
+              `<button type="button" class="post" data-read="${k}" style="--k:${Math.min(k, 10)}"><small>${postMeta(p)}</small>${esc(p.title)}</button>`,
           )
           .join('')
       : sec
@@ -474,7 +742,10 @@ function showInspect(b: PlanetBody | null, i: number, n: number) {
                 `<div class="vangogh" aria-hidden="true"><i></i><i></i><i></i><b></b></div>` +
                 `<p class="vg-cap">${lang === 'en' ? 'My favourite painter is Van Gogh. The swirls of The Starry Night suit this galaxy too.' : 'Favori ressamım Van Gogh. Yıldızlı Gece’nin girdapları bu galaksiye de yakışıyor.'}</p>`
               : `<p class="lead">${L('İş dışında beni oyalayan şeylerden biri.')}</p>`);
-  if (b.opts.char === 'music' && playlists.length) loadCovers();
+  if (b.opts.char === 'music' && playlists.length) {
+    loadCovers();
+    dressDeck();
+  }
   drawer.classList.toggle('music', b.opts.char === 'music');
   drawer.classList.remove('scrolled');
   $('insp-count').textContent = `${i + 1} / ${n}`;
@@ -501,6 +772,10 @@ $('drawer-body').addEventListener('input', (e) => {
 });
 $('drawer-body').addEventListener('click', (e) => {
   const t = e.target as HTMLElement;
+  if (t.closest('[data-pl-stop]')) {
+    stopMusic();
+    return;
+  }
   const rec = t.closest<HTMLElement>('[data-pl]');
   if (rec) {
     playRecord(rec);
@@ -517,6 +792,11 @@ $('drawer-body').addEventListener('click', (e) => {
   galaxy?.inspect(null);
   goTo(Number(go.dataset.go));
 });
+
+// kapalı çekmecenin düğmeleri klavyeyle ve ekran okuyucuyla ulaşılamaz olsun
+const syncDrawer = () => (drawer.inert = !drawer.classList.contains('open') || root.classList.contains('reading'));
+new MutationObserver(syncDrawer).observe(drawer, { attributes: true, attributeFilter: ['class'] });
+syncDrawer();
 
 function closeDrawer() {
   if (galaxy?.inspecting) {
@@ -909,12 +1189,52 @@ function setExplore(on: boolean) {
   });
 }
 
-/* ---------- okuma sayfası: bir yıldıza tıklanınca açılır (şimdilik örnek içerik) ---------- */
+/* ---------- kart içeriği sığmıyorsa altta bir ok belirir (içeride kaydırılabildiğini gösterir) ---------- */
+document.querySelectorAll<HTMLElement>('.panel').forEach((panel) => {
+  const inner = panel.querySelector<HTMLElement>('.panel-in');
+  if (!inner) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'panel-more';
+  btn.textContent = '↓';
+  btn.setAttribute('aria-label', L('Devamını göster'));
+  panel.append(btn);
+  const sync = () => panel.classList.toggle('more', inner.scrollHeight - inner.scrollTop - inner.clientHeight > 40);
+  btn.addEventListener('click', () =>
+    inner.scrollBy({ top: inner.clientHeight * 0.7, behavior: reduce ? 'auto' : 'smooth' }),
+  );
+  inner.addEventListener('scroll', sync, { passive: true });
+  addEventListener('resize', sync);
+  new ResizeObserver(sync).observe(inner);
+  sync();
+});
+/* ---------- serbest gezinti: gezegen şeridi sağa doğru devam ediyorsa ok ve solma ---------- */
+{
+  const chips = $('hud-chips');
+  const wrap = chips.parentElement!;
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.className = 'hud-next';
+  next.textContent = '›';
+  next.setAttribute('aria-label', L('Diğer gezegenler'));
+  wrap.append(next);
+  const sync = () => wrap.classList.toggle('more', chips.scrollWidth - chips.scrollLeft - chips.clientWidth > 12);
+  next.addEventListener('click', () =>
+    chips.scrollBy({ left: chips.clientWidth * 0.7, behavior: reduce ? 'auto' : 'smooth' }),
+  );
+  chips.addEventListener('scroll', sync, { passive: true });
+  addEventListener('resize', sync);
+  new ResizeObserver(sync).observe(chips);
+}
+
+/* ---------- okuma sayfası: bir yıldıza dokununca yazısı açılır ---------- */
 const reader = $('reader');
 const readerScroll = $('reader-scroll');
 let lastTap = { x: innerWidth / 2, y: innerHeight / 2 };
 addEventListener('pointerdown', (e) => (lastTap = { x: e.clientX, y: e.clientY }), true);
 let reading = -1;
+/** Yazının o an okunan dili: site diliyle başlar, yazının içindeki TR · EN ile değişir. */
+let readLang: 'tr' | 'en' = lang;
 reader
   .querySelectorAll<HTMLElement>('.rd-article > *')
   .forEach((el, k) => el.style.setProperty('--k', String(Math.min(k, 14))));
@@ -924,32 +1244,104 @@ function setBehind(off: boolean) {
     if (el === reader || el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return;
     (el as HTMLElement).inert = off;
   });
+  if (!off) syncDrawer();
+}
+type PostBody = { html: string; toc: [string, string][] };
+const bodyCache = new Map<string, Promise<PostBody>>();
+/** Yazının gövdesini getirir: /posts/<klasör>.<dil>.json (önizlemede sayfaya gömülü gelir). */
+function loadBody(id: string, l: string): Promise<PostBody> {
+  const key = `${id}.${l}`;
+  let p = bodyCache.get(key);
+  if (!p) {
+    const embedded = (window as unknown as { __POSTS?: Record<string, PostBody> }).__POSTS?.[key];
+    p = embedded
+      ? Promise.resolve(embedded)
+      : fetch(`${import.meta.env.BASE_URL}posts/${key}.json`).then((r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          return r.json() as Promise<PostBody>;
+        });
+    p.catch(() => bodyCache.delete(key));
+    bodyCache.set(key, p);
+  }
+  return p;
+}
+const rdHeads = () => [...reader.querySelectorAll<HTMLElement>('.rd-body h2')];
+const rdSpy = () => {
+  const max = readerScroll.scrollHeight - readerScroll.clientHeight;
+  $('rd-prog').style.setProperty('--p', String(max > 0 ? Math.min(1, readerScroll.scrollTop / max) : 0));
+  let cur = '';
+  rdHeads().forEach((h) => {
+    if (h.getBoundingClientRect().top < 160) cur = h.id;
+  });
+  reader
+    .querySelectorAll<HTMLElement>('[data-rd-jump]')
+    .forEach((a) => a.classList.toggle('on', a.dataset.rdJump === cur));
+};
+/** Açık olan yazıyı seçili okuma diliyle doldurur. */
+function fillReader() {
+  const post = posts[reading];
+  if (!post) return;
+  const l = readLang;
+  const list = posts.filter((p) => p.planet === post.planet);
+  const j = list.indexOf(post);
+  const no = list.length - j; // en eski yazı 1. yıldız
+  const topic = topics.find((t) => t.id === post.planet);
+  $('rd-planet').textContent = topic?.name ?? '';
+  $('rd-kicker-planet').textContent = topic?.name ?? '';
+  $('rd-no').textContent = lang === 'en' ? `star ${no}` : `${no}. yıldız`;
+  $('rd-title').textContent = post.titles[l] ?? post.title;
+  $('rd-date').textContent = fmtDate(post.date, l, true);
+  $('rd-min').textContent = fmtMin(post.mins[l] ?? post.min, l);
+  reader
+    .querySelectorAll<HTMLElement>('[data-rd-lang]')
+    .forEach((b) => b.classList.toggle('on', b.dataset.rdLang === l));
+  $('rd-tags').innerHTML = post.tags.map((t) => `<span>#${esc(t)}</span>`).join('');
+  ($('rd-src') as HTMLAnchorElement).href = post.url;
+  const body = $('rd-body');
+  const toc = $('rd-toc');
+  body.classList.add('loading');
+  const at = reading;
+  loadBody(post.id, l).then(
+    (b) => {
+      if (reading !== at || readLang !== l) return;
+      body.lang = l;
+      body.innerHTML = b.html;
+      body.querySelectorAll<HTMLElement>('[data-rd-copy]').forEach((el) => (el.textContent = L('kopyala')));
+      toc.innerHTML = b.toc.map(([id, t]) => `<li><a href="#${id}" data-rd-jump="${id}">${esc(t)}</a></li>`).join('');
+      body.classList.remove('loading');
+      rdSpy();
+    },
+    () => {
+      if (reading !== at || readLang !== l) return;
+      toc.innerHTML = '';
+      body.innerHTML = `<p class="rd-lead">${esc(post.summary)}</p><p>${
+        lang === 'en'
+          ? 'The post could not be loaded right now. You can read it on GitHub:'
+          : 'Yazı şu an yüklenemedi. GitHub üzerinden okuyabilirsin:'
+      } <a href="${post.url}" target="_blank" rel="noopener">learning-sky</a></p>`;
+      body.classList.remove('loading');
+    },
+  );
 }
 function openReader(planetId: string, j: number) {
   const list = posts.filter((p) => p.planet === planetId);
   const post = list[j];
-  if (!post) return;
-  const idx = posts.indexOf(post);
-  const topic = topics.find((t) => t.id === planetId);
+  if (!post || post.demo) return;
   const fresh = reading < 0;
-  reading = idx;
+  reading = posts.indexOf(post);
+  if (fresh) readLang = lang;
+  const topic = topics.find((t) => t.id === planetId);
   reader.style.setProperty('--tone', topic?.color ?? '#F7C548');
-  $('rd-planet').textContent = topic?.name ?? '';
-  $('rd-kicker-planet').textContent = topic?.name ?? '';
-  $('rd-no').textContent = lang === 'en' ? `star ${j + 1}` : `${j + 1}. yıldız`;
-  $('rd-title').textContent = L(post.title);
-  $('rd-sample').textContent = L(
-    idx === 0
-      ? 'Örnek yazı: tasarımı görebilmen için hazırlandı.'
-      : 'Bu yıldızın yazısı henüz yazılmadı. Tasarımı görebilmen için örnek içerik gösteriliyor.',
-  );
+  // gezegenin içinde bir önceki (daha eski) ve bir sonraki (daha yeni) yıldız
   const nav = (id: string, p: (typeof posts)[number] | undefined) => {
     const el = $(id) as HTMLButtonElement;
-    el.disabled = !p;
-    el.querySelector('b')!.textContent = p ? L(p.title) : '-';
+    el.disabled = !p || !!p.demo;
+    el.querySelector('b')!.textContent = p && !p.demo ? p.title : '-';
   };
-  nav('rd-prev', posts[idx - 1]);
-  nav('rd-nextb', posts[idx + 1]);
+  nav('rd-prev', posts[reading + 1]);
+  nav('rd-nextb', posts[reading - 1]);
+  $('rd-body').innerHTML = '';
+  fillReader();
   readerScroll.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   if (!fresh) return;
   reader.style.setProperty('--rx', `${lastTap.x}px`);
@@ -976,44 +1368,37 @@ const readAt = (i: number) => {
   const p = posts[i];
   if (p) openReader(p.planet, posts.filter((x) => x.planet === p.planet).indexOf(p));
 };
-$('rd-prev').addEventListener('click', () => readAt(reading - 1));
-$('rd-nextb').addEventListener('click', () => readAt(reading + 1));
-{
-  const heads = [...reader.querySelectorAll<HTMLElement>('.rd-article h2')];
-  const links = [...reader.querySelectorAll<HTMLElement>('[data-rd-jump]')];
-  const prog = $('rd-prog');
-  readerScroll.addEventListener(
-    'scroll',
-    () => {
-      const max = readerScroll.scrollHeight - readerScroll.clientHeight;
-      prog.style.setProperty('--p', String(max > 0 ? Math.min(1, readerScroll.scrollTop / max) : 0));
-      let cur = '';
-      heads.forEach((h) => {
-        if (h.getBoundingClientRect().top < 160) cur = h.id;
-      });
-      links.forEach((a) => a.classList.toggle('on', a.dataset.rdJump === cur));
-    },
-    { passive: true },
-  );
-  links.forEach((a) =>
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      document
-        .getElementById(a.dataset.rdJump!)
-        ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    }),
-  );
-  $('rd-copy').addEventListener('click', () => {
-    const btn = $('rd-copy');
-    const text = reader.querySelector('.rd-code code')?.textContent ?? '';
+// yazılar en yeniden eskiye sıralı: "önceki" daha eski olan
+$('rd-prev').addEventListener('click', () => readAt(reading + 1));
+$('rd-nextb').addEventListener('click', () => readAt(reading - 1));
+readerScroll.addEventListener('scroll', rdSpy, { passive: true });
+reader.addEventListener('click', (e) => {
+  const t = e.target as HTMLElement;
+  const jump = t.closest<HTMLElement>('[data-rd-jump]');
+  if (jump) {
+    e.preventDefault();
+    document
+      .getElementById(jump.dataset.rdJump!)
+      ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    return;
+  }
+  const lg = t.closest<HTMLElement>('[data-rd-lang]');
+  if (lg && lg.dataset.rdLang !== readLang) {
+    readLang = lg.dataset.rdLang as 'tr' | 'en';
+    fillReader();
+    return;
+  }
+  const copy = t.closest<HTMLElement>('[data-rd-copy]');
+  if (copy) {
+    const text = copy.closest('.rd-code')?.querySelector('pre')?.textContent ?? '';
     const done = () => {
-      btn.textContent = L('kopyalandı ✓');
-      setTimeout(() => (btn.textContent = L('kopyala')), 1600);
+      copy.textContent = L('kopyalandı ✓');
+      setTimeout(() => (copy.textContent = L('kopyala')), 1600);
     };
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done);
     else done();
-  });
-}
+  }
+});
 
 /* ---------- sayfanın kaydırma çubuğu: bölümler arasında gezen küçük gezegen ---------- */
 {
@@ -1076,14 +1461,16 @@ $('rd-nextb').addEventListener('click', () => readAt(reading + 1));
     if (swapping) return;
     swapping = true;
     btn.classList.add('swap');
+    try {
+      sessionStorage.setItem(
+        'zero-swap',
+        JSON.stringify({ y: scrollY, planet: inspBody ? bodies.indexOf(inspBody) : -1, explore: exploring }),
+      );
+    } catch {
+      /* gizli sekme */
+    }
     setTimeout(() => setLang(lang === 'tr' ? 'en' : 'tr'), reduce ? 0 : 620);
   });
-  // okuma sayfasındaki TR · EN etiketi de aynı işi görür
-  const chip = reader.querySelector<HTMLElement>('.rd-lang');
-  if (chip) {
-    chip.innerHTML = lang === 'en' ? 'TR · <b>EN</b>' : '<b>TR</b> · EN';
-    chip.addEventListener('click', () => setLang(lang === 'tr' ? 'en' : 'tr'));
-  }
 }
 void translate;
 
@@ -1102,6 +1489,11 @@ document.querySelectorAll<HTMLElement>('[data-replay]').forEach((el) =>
 );
 
 addEventListener('keydown', (e) => {
+  // M: müziği duraklat / devam ettir (yazı alanında yazarken değil)
+  if ((e.key === 'm' || e.key === 'M') && np.ctrl && !(e.target as HTMLElement).closest?.('input, textarea')) {
+    np.ctrl.togglePlay();
+    return;
+  }
   if (e.key === 'Escape') {
     if (reading >= 0) closeReader();
     else if (scopeOpen) closeScope();
@@ -1150,3 +1542,13 @@ addEventListener('resize', () => {
   irisTo(g.x, g.y, g.r);
   galaxy?.setScopeLens(g);
 });
+
+/* ---------- dil değişiminden dönüş: kaldığın yere geri koy ---------- */
+if (swap) {
+  if (Math.abs(scrollY - swap.y) > 4) window.scrollTo(0, swap.y);
+  setTimeout(() => {
+    if (swap.explore) setExplore(true);
+    const b = bodies[swap.planet];
+    if (b) galaxy?.inspect(b);
+  }, 350);
+}

@@ -199,6 +199,17 @@
   .walk .l2 {
     animation: step 0.26s linear infinite alternate-reverse;
   }
+  .type .bob {
+    animation: typeb 0.24s ease-in-out infinite alternate;
+  }
+  .caret {
+    animation: blink 0.9s steps(2) infinite;
+  }
+  @keyframes typeb {
+    to {
+      transform: translateY(-0.9px);
+    }
+  }
   .walk .bob {
     animation: bob 0.26s ease-in-out infinite alternate;
   }
@@ -285,7 +296,7 @@
 
   <section class="opt" id="o2">
     <h2><small>2</small>Uzaylının odası</h2>
-    <p>Senin fikrin. Gece: telefonu bırakır, perdeyi çeker, yatağa girip uyur. Gündüz: uyanır, perdeyi açar, koltuğa oturup telefonuna bakar.</p>
+    <p>Senin fikrin. Gece: telefonu bırakır, perdeyi çeker, bilgisayarın başına geçip kod yazar, tıpkı senin gibi. Gündüz: ekranı kapatır, perdeyi açar, koltuğa oturup telefonuna bakar.</p>
     <button class="sw room" type="button" aria-label="Gece ve gündüz arasında geç, 2. seçenek"></button>
     <div class="row"><button class="sw mini room" type="button" aria-label="2. seçenek, gerçek boyut"></button><span>gerçek boyut</span></div>
   </section>
@@ -480,7 +491,8 @@
       const S = 0.8;
       host.innerHTML = `<svg viewBox="0 0 200 88" aria-hidden="true">${defs(id)}
         <defs><linearGradient id="cu${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e98bb4"/><stop offset=".25" stop-color="#f7b6d2"/><stop offset=".5" stop-color="#e98bb4"/><stop offset=".75" stop-color="#f7b6d2"/><stop offset="1" stop-color="#e17ea9"/></linearGradient>
-        <clipPath id="w${id}"><rect x="80" y="14" width="40" height="38" rx="3"/></clipPath></defs>
+        <clipPath id="w${id}"><rect x="80" y="14" width="40" height="38" rx="3"/></clipPath>
+        <radialGradient id="sg${id}"><stop offset="0" stop-color="#9fe3ff" stop-opacity=".8"/><stop offset="1" stop-color="#9fe3ff" stop-opacity="0"/></radialGradient></defs>
         <g clip-path="url(#c${id})">
           <rect width="200" height="88" fill="#fbe7d8"/>
           <rect y="74" width="200" height="14" fill="#e9c3a7"/><rect y="73" width="200" height="2.2" fill="#d9a988"/>
@@ -497,30 +509,47 @@
           <g transform="translate(74,10)"><rect class="cl" width="27" height="47" rx="3" fill="url(#cu${id})"/></g>
           <g transform="translate(126,10) scale(-1,1)"><rect class="cr" width="27" height="47" rx="3" fill="url(#cu${id})"/></g>
           <rect x="71" y="8" width="58" height="3" rx="1.5" fill="#b9869a"/><circle cx="71" cy="9.5" r="2.4" fill="#e3a93b"/><circle cx="129" cy="9.5" r="2.4" fill="#e3a93b"/>
-          <!-- komodin ve gece lambası -->
-          <rect x="64" y="60" width="11" height="14" rx="2" fill="#c98f6b"/><rect x="68.5" y="53" width="2" height="7" fill="#8d6a55"/><path d="M64.5,53 L74.5,53 L72,45 L67,45 Z" fill="#f5c45e"/>
-          <!-- yatak -->
-          <rect x="6" y="42" width="6" height="34" rx="3" fill="#b98f73"/><rect x="60" y="58" width="5" height="18" rx="2.5" fill="#b98f73"/>
-          <rect x="10" y="61" width="52" height="11" rx="4" fill="#fff"/><rect x="10" y="68" width="52" height="5" rx="2" fill="#d9c7e8"/>
-          <rect x="13" y="51" width="22" height="11" rx="5" fill="#fdfbff" stroke="#e2d6ee" stroke-width="1"/>
-          <!-- koltuk (arkası ve minderi) -->
+          <!-- çalışma masası: duvara dayalı, uzaylı önündeki tabureye oturur -->
+          <rect x="9" y="60" width="4" height="15" fill="#b98f73"/><rect x="63" y="60" width="4" height="15" fill="#b98f73"/>
+          <rect x="6" y="56" width="64" height="4.5" rx="2" fill="#c98f6b"/>
+          <!-- saksı -->
+          <path d="M9.5,50 h7 l-1,6 h-5 Z" fill="#f28ac0"/><path d="M13,50 q-5,-7 -1,-11 q2,5 1,11 M13,50 q5,-5 3,-10 q-3,3 -3,10" fill="#8fd694"/>
+          <!-- ekran -->
+          <rect x="31" y="47" width="5" height="9" fill="#8d7aa8"/><rect x="25" y="54.5" width="17" height="2.4" rx="1.2" fill="#8d7aa8"/>
+          <rect x="16" y="23" width="35" height="25" rx="3" fill="#4a3f63"/>
+          <rect x="18" y="25" width="31" height="21" rx="1.6" fill="#2a2140"/>
+          <path d="M20,27 L30,27 L22,35 Z" fill="#fff" opacity=".08"/>
+          <g class="scr">
+            <rect x="18" y="25" width="31" height="21" rx="1.6" fill="#1d1830"/>
+            <path d="M21,29 h9" stroke="#f28ac0" stroke-width="1.5" stroke-linecap="round"/><path d="M32,29 h7" stroke="#9fe3ff" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M23.5,32.5 h12" stroke="#f5c45e" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M23.5,36 h6" stroke="#8fd694" stroke-width="1.5" stroke-linecap="round"/><path d="M31.5,36 h9" stroke="#cdb8ff" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M21,39.5 h8" stroke="#9fe3ff" stroke-width="1.5" stroke-linecap="round"/>
+            <rect class="caret" x="30.5" y="38.5" width="1.6" height="2.4" fill="#fff"/>
+          </g>
+          <circle class="glow" cx="34" cy="38" r="30" fill="url(#sg${id})"/>
+          <!-- tabure -->
+          <path d="M47.5,66 L46,75 M56.5,66 L58,75" stroke="#8d6a55" stroke-width="2" stroke-linecap="round"/>
+          <rect x="44.5" y="63.5" width="15" height="3.6" rx="1.8" fill="#f5c45e"/>
+          <!-- koltuk -->
           <rect x="141" y="36" width="38" height="36" rx="10" fill="#ee8fb7"/><rect x="146" y="58" width="28" height="14" rx="4" fill="#f7b6d2"/>
           <rect x="144" y="72" width="4" height="4" fill="#8d6a55"/><rect x="172" y="72" width="4" height="4" fill="#8d6a55"/>
-          <!-- uzaylı -->
+          <rect x="136" y="52" width="11" height="22" rx="5.5" fill="#e17ea9"/><rect x="173" y="52" width="11" height="22" rx="5.5" fill="#e17ea9"/>
+          <!-- uzaylı: bütün eşyaların önünde yürür, koltuğun koluna değmeden üstünden atlar -->
           <g class="alien">${alienG(false)}
             <g class="phone"><ellipse cx="0" cy="-26" rx="9" ry="6" fill="#9fe3ff" opacity=".35"/><rect x="-3.6" y="-21" width="7.2" height="10.5" rx="1.6" fill="#2a2140"/><rect x="-2.6" y="-20" width="5.2" height="8" rx="1" fill="#9fe3ff"/><circle class="thumb" cx="1.4" cy="-14" r="1.3" fill="#6fbf78"/><path d="M-8,-18 L-4,-14 M8,-18 L4,-14" stroke="#6fbf78" stroke-width="3" stroke-linecap="round"/></g>
           </g>
-          <!-- yorgan (uzaylının üstünde) ve koltuğun kolları -->
-          <g transform="translate(63,49.5) scale(-1,1)"><rect class="blanket" width="28" height="22" rx="5" fill="#b79bf5"/><rect class="blanket2" width="28" height="5" rx="2.5" fill="#d7c6ff"/></g>
-          <rect x="136" y="52" width="11" height="22" rx="5.5" fill="#e17ea9"/><rect x="173" y="52" width="11" height="22" rx="5.5" fill="#e17ea9"/>
-          <!-- gece karanlığı ve lambanın ışığı -->
+          <!-- gece karanlığı; ekranın ışığı karanlığın üstünde kalır -->
           <rect class="dark" width="200" height="88" fill="#120d2c"/>
-          <circle class="glow" cx="69.5" cy="49" r="19" fill="url(#glow)"/>
-          <g class="zz">${zzz(32, 44)}</g>
+          <g class="lit">
+            <rect x="18" y="25" width="31" height="21" rx="1.6" fill="#9fe3ff" opacity=".16"/>
+          </g>
+          <g class="zz" font-family="JetBrains Mono, monospace" font-weight="700" fill="#9fe3ff"><g class="zzz"><text x="55" y="27" font-size="8">{ }</text><text x="62" y="17" font-size="10">;</text></g></g>
         </g></svg>`;
       const q = (s) => host.querySelector(s);
       const al = q('.alien'),
         eyes = q('.alien .eyes'),
+        mouth = q('.alien path[stroke="#3f8f4c"]'),
         arms = q('.alien .arms'),
         phone = q('.phone'),
         cL = q('.cl'),
@@ -528,19 +557,23 @@
         wn = q('.wn'),
         dark = q('.dark'),
         glow = q('.glow'),
-        bl = q('.blanket'),
-        bl2 = q('.blanket2'),
+        scr = q('.scr'),
+        lit = q('.lit'),
         zz = q('.zz');
       const F = 75; // zemin
-      const SIT = T(160, 69, 0, S),
-        BED = T(52, 59.5, -90, S);
+      const SIT = T(160, 69, 0, S), // koltukta
+        DESK = T(52, 69.5, 0, S); // taburede, sırtı bize dönük
       const cur = (v) => ({ transform: `scale(${v},1)` });
-      const OPEN = 0.3,
-        DOWN = 0.5;
+      const OPEN = 0.3;
+      const face = (v) => {
+        set(eyes, { opacity: v });
+        set(mouth, { opacity: v });
+      };
       const P = {
         day: () => {
+          al.classList.remove('type');
           set(al, { transform: SIT });
-          set(eyes, { transform: 'scale(1,1)' });
+          face(1);
           set(arms, { opacity: 0 });
           set(phone, { opacity: 1 });
           set(cL, cur(OPEN));
@@ -548,84 +581,105 @@
           set(wn, { opacity: 0 });
           set(dark, { opacity: 0 });
           set(glow, { opacity: 0 });
-          set(bl, cur(DOWN));
-          set(bl2, cur(DOWN));
+          set(scr, { opacity: 0 });
+          set(lit, { opacity: 0 });
           set(zz, { opacity: 0 });
         },
         night: () => {
-          set(al, { transform: BED });
-          set(eyes, { transform: 'scale(1,.12)' });
-          set(arms, { opacity: 1 });
+          al.classList.add('type');
+          set(al, { transform: DESK });
+          face(0);
+          set(arms, { opacity: 0 });
           set(phone, { opacity: 0 });
           set(cL, cur(1));
           set(cR, cur(1));
           set(wn, { opacity: 1 });
-          set(dark, { opacity: 0.52 });
+          set(dark, { opacity: 0.5 });
           set(glow, { opacity: 1 });
-          set(bl, cur(1));
-          set(bl2, cur(1));
+          set(scr, { opacity: 1 });
+          set(lit, { opacity: 1 });
           set(zz, { opacity: 1 });
         },
       };
-      const TOTAL = 3900;
+      const TOTAL = 4300;
       function play(next) {
         const A = [];
+        const at = (fn, ms) => setTimeout(fn, ms);
         const walk = (a, b) => {
-          setTimeout(() => al.classList.add('walk'), a);
-          setTimeout(() => al.classList.remove('walk'), b);
+          at(() => al.classList.add('walk'), a);
+          at(() => al.classList.remove('walk'), b);
         };
+        al.classList.remove('type');
         if (next === 'night') {
           A.push(track(phone, TOTAL, [[0, { opacity: 1 }], [250, { opacity: 0 }]]));
-          A.push(track(arms, TOTAL, [[0, { opacity: 0 }], [250, { opacity: 1 }]]));
+          A.push(track(arms, TOTAL, [[0, { opacity: 0 }], [250, { opacity: 1 }], [3500, { opacity: 1 }], [3700, { opacity: 0 }]]));
           A.push(
             track(al, TOTAL, [
               [0, { transform: SIT }],
               [250, { transform: SIT }, OUT],
-              [500, { transform: T(150, F, 0, S) }], // koltuktan iner
-              [1250, { transform: T(124, F, 0, S) }], // pencerenin sağına yürür
-              [2000, { transform: T(124, F, 0, S) }], // perdeyi çeker
-              [2750, { transform: T(66, F, 0, S) }], // yatağa yürür
-              [2950, { transform: T(60, 50, -45, S) }, OUT], // zıplar
-              [3200, { transform: BED }, IN],
+              // koltuktan kalkar: önce yukarı, sonra kolun üstünden aşıp pencerenin sağına iner
+              [480, { transform: T(158, 46, -8, S) }],
+              [700, { transform: T(140, 40, -14, S) }, IN],
+              [950, { transform: T(124, F, 0, S) }],
+              [1050, { transform: T(124, F, 0, S, S * 0.9) }],
+              [1150, { transform: T(124, F, 0, S) }],
+              [1900, { transform: T(124, F, 0, S) }], // perdeyi çeker
+              [2900, { transform: T(69, F, 0, S) }], // taburenin yanına yürür
+              [3000, { transform: T(69, F, 0, S, S * 0.9) }, OUT],
+              [3250, { transform: T(61, 52, -10, S) }, IN], // tabureye zıplar
+              [3500, { transform: T(52, 69.5, 0, S) }],
+              [3650, { transform: T(52, 69.5, 0, S * 0.1, S) }], // ekrana döner
+              [3800, { transform: DESK }],
             ]),
           );
-          A.push(track(cR, TOTAL, [[1300, cur(OPEN)], [1950, cur(1), IO]]));
-          A.push(track(cL, TOTAL, [[1300, cur(OPEN)], [1950, cur(1), IO]]));
+          A.push(track(eyes, TOTAL, [[3640, { opacity: 1 }], [3660, { opacity: 0 }]]));
+          A.push(track(mouth, TOTAL, [[3640, { opacity: 1 }], [3660, { opacity: 0 }]]));
+          A.push(track(cR, TOTAL, [[1200, cur(OPEN)], [1850, cur(1), IO]]));
+          A.push(track(cL, TOTAL, [[1200, cur(OPEN)], [1850, cur(1), IO]]));
           A.push(track(wn, TOTAL, [[500, { opacity: 0 }], [1500, { opacity: 1 }]]));
-          A.push(track(dark, TOTAL, [[900, { opacity: 0 }], [1950, { opacity: 0.52 }, IO]]));
-          A.push(track(glow, TOTAL, [[1900, { opacity: 0 }], [2150, { opacity: 1 }]]));
-          A.push(track(bl, TOTAL, [[3200, cur(DOWN)], [3600, cur(1), OUT]]));
-          A.push(track(bl2, TOTAL, [[3200, cur(DOWN)], [3600, cur(1), OUT]]));
-          A.push(track(eyes, TOTAL, [[3450, { transform: 'scale(1,1)' }], [3650, { transform: 'scale(1,.12)' }]]));
-          A.push(track(zz, TOTAL, [[3650, { opacity: 0 }], [3900, { opacity: 1 }]]));
-          walk(500, 1250);
-          walk(2000, 2750);
+          A.push(track(dark, TOTAL, [[900, { opacity: 0 }], [1900, { opacity: 0.5 }, IO]]));
+          // ekran açılır: önce bir kırpışma, sonra ışık
+          A.push(track(scr, TOTAL, [[3800, { opacity: 0 }], [3860, { opacity: 0.7 }], [3920, { opacity: 0.2 }], [4050, { opacity: 1 }]]));
+          A.push(track(lit, TOTAL, [[3860, { opacity: 0 }], [4100, { opacity: 1 }]]));
+          A.push(track(glow, TOTAL, [[3860, { opacity: 0 }], [4150, { opacity: 1 }]]));
+          A.push(track(zz, TOTAL, [[4050, { opacity: 0 }], [4300, { opacity: 1 }]]));
+          walk(1900, 2900);
+          at(() => al.classList.add('type'), 4050);
         } else {
           A.push(track(zz, TOTAL, [[0, { opacity: 1 }], [200, { opacity: 0 }]]));
-          A.push(track(eyes, TOTAL, [[150, { transform: 'scale(1,.12)' }], [350, { transform: 'scale(1,1)' }]]));
-          A.push(track(bl, TOTAL, [[300, cur(1)], [650, cur(DOWN), OUT]]));
-          A.push(track(bl2, TOTAL, [[300, cur(1)], [650, cur(DOWN), OUT]]));
+          A.push(track(scr, TOTAL, [[150, { opacity: 1 }], [400, { opacity: 0 }]]));
+          A.push(track(lit, TOTAL, [[150, { opacity: 1 }], [400, { opacity: 0 }]]));
+          A.push(track(glow, TOTAL, [[150, { opacity: 1 }], [450, { opacity: 0 }]]));
+          A.push(track(eyes, TOTAL, [[540, { opacity: 0 }], [560, { opacity: 1 }]]));
+          A.push(track(mouth, TOTAL, [[540, { opacity: 0 }], [560, { opacity: 1 }]]));
+          A.push(track(arms, TOTAL, [[600, { opacity: 0 }], [750, { opacity: 1 }], [3900, { opacity: 1 }], [4100, { opacity: 0 }]]));
           A.push(
             track(al, TOTAL, [
-              [0, { transform: BED }],
-              [650, { transform: BED }, OUT],
-              [900, { transform: T(60, 50, -45, S) }, IN], // yataktan zıplar
-              [1100, { transform: T(66, F, 0, S) }],
-              [1500, { transform: T(76, F, 0, S) }], // pencerenin soluna yürür
-              [2250, { transform: T(76, F, 0, S) }], // perdeyi açar
-              [3200, { transform: T(150, F, 0, S) }], // koltuğa yürür
-              [3500, { transform: SIT }, OUT], // oturur
+              [0, { transform: DESK }],
+              [400, { transform: DESK }],
+              [550, { transform: T(52, 69.5, 0, S * 0.1, S) }], // bize döner
+              [700, { transform: T(52, 69.5, 0, S) }, OUT],
+              [950, { transform: T(61, 52, 10, S) }, IN], // tabureden iner
+              [1200, { transform: T(69, F, 0, S) }],
+              [1300, { transform: T(69, F, 0, S, S * 0.9) }],
+              [1400, { transform: T(69, F, 0, S) }],
+              [1600, { transform: T(76, F, 0, S) }], // pencerenin soluna yürür
+              [2350, { transform: T(76, F, 0, S) }], // perdeyi açar
+              [3150, { transform: T(124, F, 0, S) }], // koltuğun önüne yürür
+              [3250, { transform: T(124, F, 0, S, S * 0.9) }, OUT],
+              // kolun üstünden aşıp mindere oturur
+              [3500, { transform: T(140, 40, 14, S) }],
+              [3700, { transform: T(158, 46, 8, S) }, IN],
+              [3900, { transform: SIT }],
             ]),
           );
-          A.push(track(cL, TOTAL, [[1550, cur(1)], [2200, cur(OPEN), IO]]));
-          A.push(track(cR, TOTAL, [[1550, cur(1)], [2200, cur(OPEN), IO]]));
-          A.push(track(wn, TOTAL, [[1200, { opacity: 1 }], [2000, { opacity: 0 }]]));
-          A.push(track(dark, TOTAL, [[1550, { opacity: 0.52 }], [2300, { opacity: 0 }, IO]]));
-          A.push(track(glow, TOTAL, [[2100, { opacity: 1 }], [2400, { opacity: 0 }]]));
-          A.push(track(arms, TOTAL, [[3500, { opacity: 1 }], [3700, { opacity: 0 }]]));
-          A.push(track(phone, TOTAL, [[3500, { opacity: 0 }], [3750, { opacity: 1 }]]));
-          walk(1100, 1500);
-          walk(2250, 3200);
+          A.push(track(cL, TOTAL, [[1650, cur(1)], [2300, cur(OPEN), IO]]));
+          A.push(track(cR, TOTAL, [[1650, cur(1)], [2300, cur(OPEN), IO]]));
+          A.push(track(wn, TOTAL, [[1300, { opacity: 1 }], [2100, { opacity: 0 }]]));
+          A.push(track(dark, TOTAL, [[1650, { opacity: 0.5 }], [2400, { opacity: 0 }, IO]]));
+          A.push(track(phone, TOTAL, [[3900, { opacity: 0 }], [4150, { opacity: 1 }]]));
+          walk(1400, 1600);
+          walk(2350, 3150);
         }
         return { A, total: TOTAL };
       }

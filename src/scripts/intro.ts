@@ -35,6 +35,7 @@ export function runIntro({ galaxy, lenis }: IntroOptions) {
   (window as unknown as { __zeroIntro: boolean }).__zeroIntro = true;
   try {
     sessionStorage.setItem(KEY, '1');
+    localStorage.setItem(KEY + '-at', String(Date.now()));
   } catch {
     /* gizli sekme: her seferinde oynar */
   }

@@ -10,6 +10,23 @@ import Base from '../layouts/Base.astro';
     <p>Aradığın sayfa bu galakside yok ya da başka bir yörüngeye taşındı.</p>
     <a class="back" href="/">Galaksiye dön</a>
   </main>
+  <!-- Ziyaretçi siteyi İngilizce kullanıyorsa bu sayfa da İngilizce görünür -->
+  <script is:inline>
+    (function () {
+      try {
+        if (localStorage.getItem('lang') !== 'en') return;
+      } catch (e) {
+        return;
+      }
+      document.documentElement.lang = 'en';
+      document.title = 'Lost planet · Learning Galaxy by Zero';
+      var m = document.querySelector('.lost');
+      m.querySelector('h1').textContent = 'This planet has not been discovered yet.';
+      m.querySelector('h1 + p').textContent =
+        'The page you are looking for is not in this galaxy, or it has moved to another orbit.';
+      m.querySelector('.back').textContent = 'Back to the galaxy';
+    })();
+  </script>
 </Base>
 
 <style>

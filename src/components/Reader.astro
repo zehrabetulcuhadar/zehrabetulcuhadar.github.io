@@ -1,16 +1,9 @@
 ---
 /*
-  Okuma sayfası (örnek): bir yıldıza tıklanınca açılan yazı görünümü.
-  Şimdilik tek sayfanın üstünde açılan bir katman; içerik örnek. Gerçek yazılar geldiğinde
-  aynı tasarım her yazının kendi sayfasında kullanılacak. Mantık: src/scripts/main.ts (openReader)
+  Okuma sayfası: bir yıldıza dokununca açılan yazı görünümü.
+  Yazının gövdesi learning-sky deposundan gelir (src/data/sky.ts derlemede HTML'e çevirir,
+  /posts/<klasör>.<dil>.json olarak yayınlanır). Mantık: src/scripts/main.ts (openReader)
 */
-const toc = [
-  ['rd-s1', 'Üç ana parça'],
-  ['rd-s2', 'Mutfak benzetmesi'],
-  ['rd-s3', 'Bir programı açınca ne olur?'],
-  ['rd-s4', 'Kodda nasıl görünür?'],
-  ['rd-s5', 'Aklında kalsın'],
-];
 ---
 
 <div class="reader" id="reader" hidden role="dialog" aria-modal="true" aria-labelledby="rd-title">
@@ -27,25 +20,20 @@ const toc = [
     <div class="rd-wrap">
       <aside class="rd-toc" aria-label="Bu yazıda">
         <p>Bu yazıda</p>
-        <ol>
-          {
-            toc.map(([id, t]) => (
-              <li>
-                <a href={`#${id}`} data-rd-jump={id}>
-                  {t}
-                </a>
-              </li>
-            ))
-          }
-        </ol>
+        <ol id="rd-toc"></ol>
       </aside>
 
       <article class="rd-article">
-        <p class="rd-sample" id="rd-sample">Örnek yazı: tasarımı görebilmen için hazırlandı.</p>
-        <p class="rd-kicker"><span id="rd-kicker-planet">Basics</span> gezegeni · <span id="rd-no">1. yıldız</span></p>
-        <h1 id="rd-title">Bilgisayar nasıl çalışır? İşlemci, bellek ve disk nedir?</h1>
+        <p class="rd-kicker"><span id="rd-kicker-planet"></span> gezegeni · <span id="rd-no"></span></p>
+        <h1 id="rd-title"></h1>
         <p class="rd-meta">
-          <span>24 Kasım 2026</span><span>6 dk okuma</span><span class="rd-lang"><b>TR</b> · EN</span>
+          <span id="rd-date"></span><span id="rd-min"></span><span class="rd-lang"
+            ><button type="button" data-rd-lang="tr" aria-label="Yazıyı Türkçe oku">TR</button> · <button
+              type="button"
+              data-rd-lang="en"
+              aria-label="Yazıyı İngilizce oku">EN</button
+            ></span
+          >
         </p>
         <svg class="rd-const" viewBox="0 0 600 40" aria-hidden="true">
           <path d="M6 28 L120 10 L230 30 L352 8 L470 26 L594 12"></path>
@@ -60,133 +48,14 @@ const toc = [
           </g>
         </svg>
 
-        <p class="rd-lead">
-          Her gün kullandığımız bilgisayarın içinde aslında çok sade bir düzen var: düşünen bir parça, o an üzerinde
-          çalışılan şeyleri tutan bir parça ve her şeyi kalıcı olarak saklayan bir parça. Bu yazıda bu üçünü
-          tanıyacağız.
+        <div class="rd-body" id="rd-body" aria-live="polite"></div>
+
+        <p class="rd-tags" id="rd-tags"></p>
+        <p class="rd-src">
+          <a id="rd-src" href="https://github.com/zehrabetulcuhadar/learning-sky" target="_blank" rel="noopener"
+            >Bu yazı ve örnek kodu GitHub'da →</a
+          >
         </p>
-
-        <h2 id="rd-s1">Üç ana parça</h2>
-        <p>
-          Bir programı çalıştırmak, bir tarifi uygulamaya benzer. Tarif (program) bir yerde durur, biri onu adım adım
-          okur ve uygular, bu sırada da malzemeler tezgâhın üzerinde bekler. Bilgisayarda bu rolleri üç parça üstlenir:
-        </p>
-        <ul class="rd-trio">
-          <li style="--c:#F2766B">
-            <b>İşlemci <small>CPU</small></b>
-            Komutları tek tek okuyup uygulayan parça. Saniyede milyarlarca küçük işlem yapar.
-          </li>
-          <li style="--c:#7C8CF2">
-            <b>Bellek <small>RAM</small></b>
-            O an çalışan programların verisini tutar. Çok hızlıdır ama bilgisayar kapanınca boşalır.
-          </li>
-          <li style="--c:#4FC7B8">
-            <b>Disk <small>SSD / HDD</small></b>
-            Dosyaları ve programları kalıcı olarak saklar. Bellekten yavaştır ama unutmaz.
-          </li>
-        </ul>
-
-        <figure class="rd-fig">
-          <svg viewBox="0 0 640 210" role="img" aria-label="Disk, bellek ve işlemci arasındaki veri akışı">
-            <g class="rd-node" style="--c:#4FC7B8">
-              <rect x="20" y="60" width="150" height="90" rx="22"></rect>
-              <text x="95" y="100">Disk</text><text class="s" x="95" y="124">kalıcı depo</text>
-            </g>
-            <g class="rd-node" style="--c:#7C8CF2">
-              <rect x="245" y="60" width="150" height="90" rx="22"></rect>
-              <text x="320" y="100">Bellek</text><text class="s" x="320" y="124">çalışma tezgâhı</text>
-            </g>
-            <g class="rd-node" style="--c:#F2766B">
-              <rect x="470" y="60" width="150" height="90" rx="22"></rect>
-              <text x="545" y="100">İşlemci</text><text class="s" x="545" y="124">işi yapan</text>
-            </g>
-            <path class="rd-arrow" d="M174 92 H238 M228 84 l10 8 l-10 8"></path>
-            <path class="rd-arrow" d="M399 92 H463 M453 84 l10 8 l-10 8"></path>
-            <path class="rd-arrow" d="M466 122 H402 M412 114 l-10 8 l10 8"></path>
-            <text class="rd-cap" x="206" y="76">yükle</text>
-            <text class="rd-cap" x="431" y="76">oku</text>
-            <text class="rd-cap" x="431" y="146">yaz</text>
-          </svg>
-          <figcaption>Program diskten belleğe yüklenir; işlemci belleği okur, sonucu yine belleğe yazar.</figcaption>
-        </figure>
-
-        <h2 id="rd-s2">Mutfak benzetmesi</h2>
-        <div class="rd-call">
-          <span class="rd-call-ic" aria-hidden="true">✦</span>
-          <div>
-            <b>Benzetme</b>
-            <p>
-              Disk <em>kiler</em>, bellek <em>tezgâh</em>, işlemci ise <em>aşçı</em>. Aşçı kilerde yemek yapamaz; önce
-              malzemeyi tezgâha alır. Tezgâh küçükse sürekli kilere gidip gelmek zorunda kalır ve mutfak yavaşlar.
-            </p>
-          </div>
-        </div>
-        <p>
-          Bilgisayarın “kasması” çoğu zaman tam olarak budur: bellek dolduğunda işletim sistemi, tezgâhta yer açmak için
-          bazı şeyleri geçici olarak diske taşır. Disk bellekten çok daha yavaş olduğu için her şey ağırlaşır. Buna <strong
-            >takas</strong
-          > (swap) denir.
-        </p>
-        <blockquote>
-          Hız sıralaması hep aynıdır: işlemcinin kendi küçük hafızası en hızlı, sonra bellek, en son disk. Hızlandıkça
-          pahalanır ve küçülür.
-        </blockquote>
-
-        <h2 id="rd-s3">Bir programı açınca ne olur?</h2>
-        <ol class="rd-steps">
-          <li>Simgeye çift tıklarsın. İşletim sistemi programın dosyasını <strong>diskte</strong> bulur.</li>
-          <li>Dosyanın gerekli kısımları <strong>belleğe</strong> kopyalanır.</li>
-          <li>
-            <strong>İşlemci</strong>, bellekteki ilk komuttan başlayarak sırayla okur ve uygular: getir, çöz, çalıştır.
-          </li>
-          <li>Sen “Kaydet” deyince, bellekteki veri kalıcı olması için tekrar <strong>diske</strong> yazılır.</li>
-        </ol>
-
-        <div class="rd-table">
-          <table>
-            <thead>
-              <tr><th></th><th>Hız</th><th>Kapasite</th><th>Kapanınca</th></tr>
-            </thead>
-            <tbody>
-              <tr><th>İşlemci önbelleği</th><td>en hızlı</td><td>birkaç MB</td><td>silinir</td></tr>
-              <tr><th>Bellek (RAM)</th><td>hızlı</td><td>8-64 GB</td><td>silinir</td></tr>
-              <tr><th>Disk (SSD)</th><td>yavaş</td><td>256 GB ve üstü</td><td>kalır</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h2 id="rd-s4">Kodda nasıl görünür?</h2>
-        <p>
-          Günlük kod yazarken bu üçlüyle sürekli karşılaşırız, sadece adını koymayız. Aşağıdaki küçük örnekte
-          <code>sayilar</code> dizisi bellekte durur, döngüyü işlemci çalıştırır, <code>writeFile</code> ise sonucu diske
-          yazar.
-        </p>
-        <figure class="rd-code">
-          <figcaption>
-            <span>toplam.ts</span>
-            <button type="button" id="rd-copy">kopyala</button>
-          </figcaption>
-          <pre><code><span class="k">import</span> {'{'} writeFile {'}'} <span class="k">from</span> <span class="s">'node:fs/promises'</span>;
-
-<span class="c">// bellek: dizi, program çalıştığı sürece RAM'de durur</span>
-<span class="k">const</span> sayilar = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>, <span class="n">1</span>, <span class="n">5</span>, <span class="n">9</span>];
-
-<span class="c">// işlemci: her adımda bir toplama komutu çalıştırır</span>
-<span class="k">let</span> toplam = <span class="n">0</span>;
-<span class="k">for</span> (<span class="k">const</span> s <span class="k">of</span> sayilar) toplam += s;
-
-<span class="c">// disk: sonuç kalıcı olsun diye dosyaya yazılır</span>
-<span class="k">await</span> <span class="f">writeFile</span>(<span class="s">'sonuc.txt'</span>, <span class="f">String</span>(toplam));</code></pre>
-        </figure>
-
-        <h2 id="rd-s5">Aklında kalsın</h2>
-        <ul class="rd-keep">
-          <li>İşlemci düşünür, bellek o anki işi tutar, disk saklar.</li>
-          <li>Bellek hızlıdır ama geçicidir; disk yavaştır ama kalıcıdır.</li>
-          <li>Bellek dolarsa bilgisayar diski tezgâh gibi kullanmaya başlar ve yavaşlar.</li>
-        </ul>
-
-        <p class="rd-tags"><span>#donanım</span><span>#temeller</span><span>#bellek</span></p>
 
         <nav class="rd-next" aria-label="Diğer yıldızlar">
           <button type="button" id="rd-prev"><small>← önceki yıldız</small><b>-</b></button>
@@ -393,15 +262,6 @@ const toc = [
       opacity 0.6s ease calc(0.3s + var(--k, 0) * 0.04s),
       translate 0.7s var(--soft) calc(0.3s + var(--k, 0) * 0.04s);
   }
-  .rd-sample {
-    display: inline-block;
-    margin: 0 0 18px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font: 500 11px var(--mono);
-    color: var(--muted);
-    border: 1px dashed var(--line-strong);
-  }
   .rd-kicker {
     margin: 0;
     font: 500 11.5px var(--mono);
@@ -433,9 +293,6 @@ const toc = [
     border-radius: 999px;
     background: var(--chip);
     border: 1px solid var(--line);
-  }
-  .rd-lang b {
-    color: var(--fg);
   }
   .rd-const {
     display: block;
@@ -486,40 +343,6 @@ const toc = [
     font-weight: 750;
     background: linear-gradient(transparent 62%, color-mix(in srgb, var(--tone) 45%, transparent) 62%);
   }
-  .rd-trio {
-    list-style: none;
-    margin: 22px 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    font-size: 14.5px;
-    line-height: 1.5;
-  }
-  .rd-trio li {
-    padding: 16px 16px 18px;
-    border-radius: 22px;
-    background: var(--card);
-    border: 1px solid var(--edge);
-    box-shadow: var(--clay-sm);
-    border-top: 5px solid var(--c);
-  }
-  .rd-trio li:nth-child(1) {
-    rotate: -1.2deg;
-  }
-  .rd-trio li:nth-child(3) {
-    rotate: 1.2deg;
-  }
-  .rd-trio b {
-    display: block;
-    margin-bottom: 4px;
-    font: 700 18px var(--display);
-  }
-  .rd-trio small {
-    font: 500 10.5px var(--mono);
-    color: var(--muted);
-    margin-left: 4px;
-  }
   .rd-fig {
     margin: 28px 0;
     padding: 18px 14px 12px;
@@ -533,39 +356,6 @@ const toc = [
     width: 100%;
     height: auto;
   }
-  .rd-node rect {
-    fill: color-mix(in srgb, var(--c) 30%, var(--card-solid));
-    stroke: var(--c);
-    stroke-width: 2.5;
-  }
-  .rd-node text {
-    fill: var(--fg);
-    text-anchor: middle;
-    font: 700 21px var(--display);
-  }
-  .rd-node text.s {
-    font: 500 12px var(--mono);
-    fill: var(--muted);
-  }
-  .rd-arrow {
-    fill: none;
-    stroke: var(--fg);
-    stroke-width: 2.2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 5 6;
-    animation: rd-flow 1.2s linear infinite;
-  }
-  @keyframes rd-flow {
-    to {
-      stroke-dashoffset: -22;
-    }
-  }
-  .rd-cap {
-    fill: var(--muted);
-    text-anchor: middle;
-    font: 500 12px var(--mono);
-  }
   .rd-fig figcaption,
   .rd-code figcaption {
     font: 500 12px var(--mono);
@@ -575,75 +365,12 @@ const toc = [
     margin-top: 8px;
     text-align: center;
   }
-  .rd-call {
-    display: flex;
-    gap: 14px;
-    margin: 22px 0;
-    padding: 18px 20px;
-    border-radius: 24px;
-    background: color-mix(in srgb, var(--tone) 16%, var(--card-solid));
-    border: 1.5px solid color-mix(in srgb, var(--tone) 55%, transparent);
-    rotate: -0.6deg;
-  }
-  .rd-call-ic {
-    flex: none;
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    font-size: 18px;
-    color: var(--ink-fixed);
-    background: var(--tone);
-    box-shadow: 0 4px 0 -1px color-mix(in srgb, var(--tone) 60%, #20081a);
-  }
-  .rd-call b {
-    font: 600 23px/1 var(--hand);
-  }
-  .rd-call p {
-    margin: 4px 0 0;
-    font-size: 16px;
-    line-height: 1.6;
-  }
   .rd-article blockquote {
     margin: 26px 0;
     padding: 4px 0 4px 22px;
     border-left: 4px solid var(--tone);
     font: 500 21px/1.5 var(--display);
     font-variation-settings: 'wdth' 90;
-  }
-  .rd-steps {
-    list-style: none;
-    counter-reset: st;
-    margin: 18px 0;
-    padding: 0;
-    display: grid;
-    gap: 10px;
-  }
-  .rd-steps li {
-    counter-increment: st;
-    position: relative;
-    padding: 12px 16px 12px 58px;
-    border-radius: 18px;
-    background: var(--card);
-    border: 1px solid var(--edge);
-    box-shadow: var(--clay-sm);
-    font-size: 16px;
-    line-height: 1.55;
-  }
-  .rd-steps li::before {
-    content: counter(st);
-    position: absolute;
-    left: 14px;
-    top: 11px;
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    font: 700 15px var(--display);
-    color: var(--ink-fixed);
-    background: var(--tone);
   }
   .rd-table {
     margin: 24px 0;
@@ -714,48 +441,6 @@ const toc = [
     background: none;
     font: inherit;
   }
-  .rd-code .k {
-    color: #f28ac0;
-  }
-  .rd-code .s {
-    color: #8fd694;
-  }
-  .rd-code .n {
-    color: #f9a65a;
-  }
-  .rd-code .f {
-    color: #6cc5ee;
-  }
-  .rd-code .c {
-    color: #8b80a6;
-    font-style: italic;
-  }
-  .rd-keep {
-    list-style: none;
-    margin: 16px 0;
-    padding: 20px 22px;
-    border-radius: 26px;
-    background: var(--card);
-    border: 1px solid var(--edge);
-    box-shadow: var(--clay);
-    display: grid;
-    gap: 10px;
-    font-weight: 600;
-  }
-  .rd-keep li {
-    position: relative;
-    padding-left: 30px;
-  }
-  .rd-keep li::before {
-    content: '';
-    position: absolute;
-    left: 2px;
-    top: 0.5em;
-    width: 14px;
-    height: 14px;
-    background: var(--tone);
-    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-  }
   .rd-tags {
     margin: 26px 0 0;
     display: flex;
@@ -803,6 +488,150 @@ const toc = [
     opacity: 0.4;
     pointer-events: none;
   }
+  /* ---- yazının gövdesi (Markdown'dan gelen içerik) ---- */
+  .rd-lang button {
+    font: inherit;
+    color: inherit;
+    padding: 2px 4px;
+    margin: -2px 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .rd-lang button.on {
+    color: var(--fg);
+    font-weight: 700;
+  }
+  .rd-lang button:not(.on):hover {
+    text-decoration: underline;
+  }
+  .rd-body {
+    min-height: 40vh;
+    transition: opacity 0.25s ease;
+  }
+  .rd-body.loading {
+    opacity: 0.35;
+  }
+  .rd-by {
+    margin: 0 0 18px;
+    font: 500 12.5px/1.5 var(--mono);
+    color: var(--muted);
+  }
+  .rd-by p {
+    margin: 0;
+  }
+  .rd-body h3 {
+    margin: 30px 0 8px;
+    font-family: var(--display);
+    font-size: 21px;
+    line-height: 1.2;
+    font-variation-settings:
+      'wdth' 88,
+      'wght' 680;
+  }
+  .rd-body a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--tone);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+  }
+  .rd-body a:hover {
+    background: color-mix(in srgb, var(--tone) 22%, transparent);
+  }
+  .rd-body ul,
+  .rd-body ol {
+    margin: 14px 0;
+    padding-left: 1.5em;
+  }
+  .rd-body li {
+    margin: 8px 0;
+  }
+  .rd-body li::marker {
+    color: color-mix(in srgb, var(--tone) 70%, var(--fg));
+    font-weight: 700;
+  }
+  .rd-body li > p {
+    margin: 8px 0;
+  }
+  .rd-body strong {
+    background: none;
+    font-weight: 720;
+  }
+  .rd-body .rd-lead strong:first-child {
+    background: linear-gradient(transparent 62%, color-mix(in srgb, var(--tone) 45%, transparent) 62%);
+  }
+  .rd-body blockquote {
+    font: inherit;
+    color: var(--muted);
+  }
+  .rd-body blockquote p {
+    margin: 6px 0;
+  }
+  .rd-body hr {
+    margin: 34px 0;
+    border: 0;
+    border-top: 1px dashed var(--line-strong);
+  }
+  .rd-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+  .rd-img svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .rd-body .rd-table td,
+  .rd-body .rd-table th {
+    white-space: normal;
+    vertical-align: top;
+  }
+  .rd-body .rd-table code {
+    overflow-wrap: anywhere;
+  }
+  .rd-code pre span {
+    color: var(--shiki-dark);
+  }
+  .rd-code figcaption span:empty::before {
+    content: '</>';
+  }
+  /* uzun satır içi kodlar ve adresler telefonda satıra sığsın */
+  .rd-body {
+    overflow-wrap: break-word;
+  }
+  .rd-body :not(pre) > code {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .rd-body .rd-lead {
+    font-size: 19px;
+    font-weight: 450;
+  }
+  @media (max-width: 620px) {
+    .rd-body .rd-lead {
+      font-size: 17px;
+    }
+    .rd-body ul,
+    .rd-body ol {
+      padding-left: 1.15em;
+    }
+  }
+  .rd-src {
+    margin: 26px 0 0;
+    font: 500 13px var(--mono);
+  }
+  .rd-src a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--line-strong);
+  }
+  .rd-src a:hover {
+    color: var(--fg);
+  }
   .rd-sign {
     margin: 34px 0 0;
     text-align: center;
@@ -827,12 +656,6 @@ const toc = [
     }
     .rd-lead {
       font-size: 18.5px;
-    }
-    .rd-trio {
-      grid-template-columns: 1fr;
-    }
-    .rd-trio li {
-      rotate: 0deg !important;
     }
     .rd-crumb {
       display: none;

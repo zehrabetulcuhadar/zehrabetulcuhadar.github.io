@@ -12,7 +12,8 @@ npm run build    # dist/ klasörüne derler
 
 - `src/pages/index.astro`: sayfanın bölümleri (giriş, hakkımda, gelişim, gökyüzü, iletişim)
 - `src/pages/404.astro`: bulunamayan sayfa
-- `src/data/site.ts`: metinler, deneyimler, beceriler, gezegenler, örnek yazılar ve Spotify çalma listeleri
+- `src/data/site.ts`: metinler, deneyimler, beceriler, gezegenler ve Spotify çalma listeleri
+- `src/data/sky.ts`: yazıları [learning-sky](https://github.com/zehrabetulcuhadar/learning-sky) deposundan okur. Bilgisayarda bu klasörün yanında `learning-sky` klasörü varsa oradan (henüz göndermediğin yazıları da görürsün), yoksa GitHub'dan alır. Yalnızca `status: "published"` olan ve tarihi gelmiş yazılar görünür. Sitede elle yazı tutulmaz.
 - `src/components/`: açılış (`Intro.astro`) ve yazı görünümü (`Reader.astro`)
 - `src/scripts/galaxy/`: 3D sahne; gezegen karakterleri `characters/` altında
 - `src/scripts/intro.ts`: açılış animasyonları (varsayılan: kod editörü ve bomba)

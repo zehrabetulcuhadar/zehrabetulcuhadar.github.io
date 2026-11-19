@@ -1,6 +1,5 @@
 // Sitenin içerik verisi.
-// Not: Yazılar ileride learning-sky deposundaki sky.json dosyasından gelecek.
-// Şimdilik content-plan.md'deki gerçek başlıklardan örnekler var (sample: true).
+// Yazılar burada tutulmaz: learning-sky deposundan gelir (bkz. src/data/sky.ts).
 
 export type Theme = 'day' | 'night';
 
@@ -15,9 +14,23 @@ export interface Planet {
 }
 
 export interface Post {
+  /** learning-sky deposundaki klasör adı (ör. 2026-11-17-cors-nedir) */
+  id: string;
   title: string;
   planet: string;
-  sample?: boolean;
+  summary: string;
+  /** YYYY-AA-GG */
+  date: string;
+  tags: string[];
+  /** okuma süresi, dakika */
+  min: number;
+  /** iki dildeki başlık ve süre: okuma sayfasındaki TR · EN geçişi için */
+  titles: Record<string, string>;
+  mins: Record<string, number>;
+  /** yazının GitHub'daki klasörü */
+  url: string;
+  /** "#dolu" denemesinin örnek yıldızı: okuma sayfası açılmaz */
+  demo?: boolean;
 }
 
 export const topics: Planet[] = [
@@ -57,26 +70,47 @@ export const playlists: { id: string; title?: string }[] = [
   { id: '4HulCKVuSZSqeSRmei81Qu' },
 ];
 
-export const posts: Post[] = [
-  { planet: 'basics', title: 'Bilgisayar nasıl çalışır? İşlemci, bellek ve disk nedir?', sample: true },
-  { planet: 'basics', title: 'İkili sayı sistemi nedir?', sample: true },
-  { planet: 'basics', title: 'İşletim sistemi nedir? Süreç ve thread farkı', sample: true },
-  { planet: 'basics', title: 'Stack ve heap farkı nedir?', sample: true },
-  { planet: 'basics', title: 'Derleyici nedir? Yorumlayıcıdan farkı ne?', sample: true },
-  { planet: 'backend', title: "C#'ta değer tipi ve referans tipi nedir?", sample: true },
-  { planet: 'backend', title: 'Generics nedir? Neden List<T>?', sample: true },
-  { planet: 'backend', title: 'LINQ nasıl çalışır?', sample: true },
-  { planet: 'frontend', title: 'TypeScript tip sistemi nasıl çalışır?', sample: true },
-  { planet: 'frontend', title: 'Generics, union ve type guard', sample: true },
-  { planet: 'frontend', title: 'Angular nasıl çalışır?', sample: true },
-  { planet: 'quality', title: 'Terminal nedir? Kabuk ve PATH', sample: true },
-  { planet: 'quality', title: 'Git nasıl çalışır?', sample: true },
-  { planet: 'ai', title: 'Yapay zekâ, makine öğrenmesi ve derin öğrenme farkı', sample: true },
-  { planet: 'ai', title: 'Büyük dil modeli (LLM) nedir?', sample: true },
-  { planet: 'ai', title: 'Token nedir? Bağlam penceresi neden önemli?', sample: true },
-  { planet: 'ai', title: 'Halüsinasyon nedir?', sample: true },
-  { planet: 'news', title: 'Kasım-Aralık ayının yazılım haberleri', sample: true },
-];
+/**
+ * Yazılar learning-sky deposundan gelir: derleme sırasında src/data/sky.ts okur,
+ * index.astro listeyi sayfaya gömer (#sky-data), burada o liste seçili dile göre açılır.
+ * En yeni yazı en başta.
+ */
+export const posts: Post[] = (() => {
+  if (typeof document === 'undefined') return [];
+  try {
+    let en = false;
+    try {
+      en = localStorage.getItem('lang') === 'en';
+    } catch {
+      /* gizli sekme */
+    }
+    const l = en ? 'en' : 'tr';
+    const raw = JSON.parse(document.getElementById('sky-data')?.textContent || '[]') as {
+      id: string;
+      date: string;
+      topic: string;
+      title: Record<string, string>;
+      summary: Record<string, string>;
+      tags: string[];
+      min: Record<string, number>;
+      url: string;
+    }[];
+    return raw.map((p) => ({
+      id: p.id,
+      planet: p.topic,
+      title: p.title[l] ?? p.title.tr,
+      summary: p.summary[l] ?? p.summary.tr,
+      date: p.date,
+      tags: p.tags,
+      min: p.min[l] ?? p.min.tr,
+      titles: p.title,
+      mins: p.min,
+      url: p.url,
+    }));
+  } catch {
+    return [];
+  }
+})();
 
 export const sections = [
   { id: 'giris', label: 'Karşılama' },
@@ -143,6 +177,19 @@ if (typeof location !== 'undefined' && location.hash === '#dolu') {
   topics.forEach((t, i) => {
     const n = 50 + ((i * 37) % 51);
     const have = posts.filter((p) => p.planet === t.id).length;
-    for (let k = have; k < n; k++) posts.push({ planet: t.id, title: `${t.name} notu ${k + 1}`, sample: true });
+    for (let k = have; k < n; k++)
+      posts.push({
+        id: `demo-${t.id}-${k}`,
+        planet: t.id,
+        title: `${t.name} notu ${k + 1}`,
+        summary: '',
+        date: '',
+        tags: [],
+        min: 0,
+        titles: {},
+        mins: {},
+        url: '',
+        demo: true,
+      });
   });
 }

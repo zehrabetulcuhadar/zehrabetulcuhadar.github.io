@@ -3,6 +3,7 @@
   width: 96px;
   height: auto;
   padding: 4px;
+  border-radius: 17px;
 }
 .ts-scene,
 .ts-scene svg {
@@ -12,7 +13,7 @@
 .ts-scene svg {
   height: auto;
   aspect-ratio: 200 / 88;
-  border-radius: 999px;
+  border-radius: 13px;
   overflow: hidden;
 }
 /* yürüyen bacaklar ve küçük döngüler */
@@ -25,6 +26,23 @@
 }
 .ts-scene .walk .l2 {
   animation: ts-step 0.26s linear infinite alternate-reverse;
+}
+.ts-scene .type .bob {
+  animation: ts-type 0.24s ease-in-out infinite alternate;
+}
+.ts-scene .caret,
+.ts-scene .thumb {
+  animation: ts-blink 0.9s steps(2) infinite;
+}
+@keyframes ts-type {
+  to {
+    transform: translateY(-0.9px);
+  }
+}
+@keyframes ts-blink {
+  50% {
+    opacity: 0.35;
+  }
 }
 .ts-scene .walk .bob {
   animation: ts-bob 0.26s ease-in-out infinite alternate;
@@ -61,7 +79,10 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .ts-scene .zzz text,
-  .ts-scene .tw {
+  .ts-scene .tw,
+  .ts-scene .caret,
+  .ts-scene .thumb,
+  .ts-scene .type .bob {
     animation: none;
   }
 }
